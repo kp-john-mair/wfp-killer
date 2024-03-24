@@ -60,3 +60,6 @@ private:
     HANDLE _engineHandle{};
     HANDLE _enumHandle{};
 };
+
+
+std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter);

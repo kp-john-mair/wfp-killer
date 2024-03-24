@@ -1,6 +1,6 @@
 #include "wfp_objects.h"
 #include <iostream>
-
+#include <iomanip>
 
 namespace
 {
@@ -73,10 +73,76 @@ bool WfpContext::process()
     std::cout << "Creating filterEnum\n";
 
     filterEnum.forEach([](const auto &filter) {
-        std::cout << "Found PIA filter with id " << filter.filterId << std::endl;
+        std::cout << "Found PIA filter with id " << filter<< std::endl;
     });
 
     //         result = FwpmFilterDeleteById(_engine, filterId);
 
     return true;
+}
+
+std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
+{
+    // Access the FWPM_FILTER's members and print them. Just as an example, let's say it has a name and description.
+    os << "[Id: " << filter.filterId << "]" << " [Weight: " << std::setw(2) << static_cast<int>(filter.weight.uint8) << "] ";
+
+    switch(filter.action.type)
+    {
+    case FWP_ACTION_BLOCK:
+    {
+        os << "BLOCK ";
+        break;
+    }
+    case FWP_ACTION_PERMIT:
+    {
+        os << "PERMIT ";
+        break;
+    }
+    case FWP_ACTION_CALLOUT_TERMINATING:
+    {
+        os << "CALLOUT ";
+        break;
+    }
+    default:
+        os << "UNKNOWN ";
+    }
+
+    if(filter.layerKey == FWPM_LAYER_ALE_AUTH_CONNECT_V4)
+    {
+        os << "[Layer: Ipv4 outbound]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_ALE_AUTH_CONNECT_V6)
+    {
+        os << "[Layer: Ipv6 outbound]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4)
+    {
+        os << "[Layer: Ipv4 inbound]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6)
+    {
+        os << "[Layer: Ipv6 inbound]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_ALE_BIND_REDIRECT_V4)
+    {
+        os << "[Layer: Ipv4 bind-redirect]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4)
+    {
+        os << "[Layer: Ipv4 flow-established]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_ALE_CONNECT_REDIRECT_V4)
+    {
+        os << "[Layer: Ipv4 connect-redirect]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_INBOUND_IPPACKET_V4)
+    {
+        os << "[Layer: Ipv4 packet-inbound]";
+    }
+    else if(filter.layerKey == FWPM_LAYER_OUTBOUND_IPPACKET_V4)
+    {
+        os << "[Layer: Ipv4 packet-outbound]";
+    }
+
+    return os;
 }

@@ -57,7 +57,6 @@ public:
 private:
     UINT32 _numEntries{0};
     FWPM_FILTER** _filters{NULL};
-    FWPM_FILTER_ENUM_TEMPLATE _enumTemplate{};
     HANDLE _engineHandle{};
     HANDLE _enumHandle{};
 };

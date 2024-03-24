@@ -28,7 +28,6 @@ Engine::~Engine()
 FilterEnum::FilterEnum(FWPM_FILTER_ENUM_TEMPLATE enumTemplate, HANDLE engineHandle)
 : _numEntries{0}
 , _filters{NULL}
-, _enumTemplate{std::move(_enumTemplate)}
 , _engineHandle{engineHandle}
 , _enumHandle{}
 {
@@ -63,50 +62,21 @@ FilterEnum::~FilterEnum()
 
 bool WfpContext::process()
 {
-    DWORD result = ERROR_SUCCESS;
-    HANDLE enumHandle = NULL;
     FWPM_FILTER_ENUM_TEMPLATE enumTemplate = {0};
     enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;
     enumTemplate.providerKey = const_cast<GUID*>(&PROVIDER_KEY);
     enumTemplate.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
     enumTemplate.actionMask = 0xFFFFFFFF;
 
-    // Create an enumeration handle. Here, we don't specify any conditions so all filters will be enumerated.
-    result = FwpmFilterCreateEnumHandle(_engine, &enumTemplate, &enumHandle);
-    if (result != ERROR_SUCCESS) {
-        std::cerr << "FwpmFilterCreateEnumHandle0 failed. Error: " << result << std::endl;
-        return 1;
-    }
+    FilterEnum filterEnum{enumTemplate, _engine};
 
-    FWPM_FILTER** filters = NULL;
-    UINT32 numEntriesReturned = 0;
+    std::cout << "Creating filterEnum\n";
 
-    // Retrieve all filters. Adjust numEntriesRequested as needed.
-    result = FwpmFilterEnum(_engine, enumHandle, 100, &filters, &numEntriesReturned);
-    if (result != ERROR_SUCCESS) {
-        std::cerr << "FwpmFilterEnum0 failed. Error: " << result << std::endl;
-    } else {
-        for(UINT32 i = 0; i < numEntriesReturned; i++) {
-            const auto &filterId = filters[i]->filterId;
-            // Process each filter. For example, print filter ID.
-            std::cout << "Deleting Filter ID: " << filterId << std::endl;
+    filterEnum.forEach([](const auto &filter) {
+        std::cout << "Found PIA filter with id " << filter.filterId << std::endl;
+    });
 
-            result = FwpmFilterDeleteById(_engine, filterId);
-
-            if(result == ERROR_SUCCESS) {
-                std::cout << "Successfully deleted filter with ID: " << filterId << std::endl;
-            }
-            else {
-                std::cerr << "Failed to delete filter. Error: " << result << std::endl;
-            }
-        }
-    }
-
-    // Free the memory allocated for the filters array.
-    FwpmFreeMemory((void**)&filters);
-
-    // Close the enumeration handle and engine session.
-    FwpmFilterDestroyEnumHandle(_engine, enumHandle);
+    //         result = FwpmFilterDeleteById(_engine, filterId);
 
     return true;
 }

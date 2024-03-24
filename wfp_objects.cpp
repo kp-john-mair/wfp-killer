@@ -27,7 +27,7 @@ bool WfpContext::process()
     HANDLE enumHandle = NULL;
     FWPM_FILTER_ENUM_TEMPLATE enumTemplate = {0};
     enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;
-    enumTemplate.providerKey = (GUID*)&PROVIDER_KEY;
+    enumTemplate.providerKey = const_cast<GUID*>(&PROVIDER_KEY);
     enumTemplate.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
     enumTemplate.actionMask = 0xFFFFFFFF;
 

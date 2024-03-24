@@ -12,8 +12,7 @@ Engine::Engine()
     auto result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, NULL, &_handle);
     if(result != ERROR_SUCCESS)
     {
-        std::cerr << "FwpmEngineOpen failed. Error: " << result << std::endl;
-        throw WfpError{"FwpmEngineOpen failed"};
+        throw WfpError{"FwpmEngineOpen failed: " + result};
     }
 }
 
@@ -36,11 +35,10 @@ bool WfpContext::process()
     result = FwpmFilterCreateEnumHandle(_engine, &enumTemplate, &enumHandle);
     if (result != ERROR_SUCCESS) {
         std::cerr << "FwpmFilterCreateEnumHandle0 failed. Error: " << result << std::endl;
-        FwpmEngineClose0(_engine);
         return 1;
     }
 
-    FWPM_FILTER0** filters = NULL;
+    FWPM_FILTER** filters = NULL;
     UINT32 numEntriesReturned = 0;
 
     // Retrieve all filters. Adjust numEntriesRequested as needed.
@@ -70,4 +68,5 @@ bool WfpContext::process()
     // Close the enumeration handle and engine session.
     FwpmFilterDestroyEnumHandle(_engine, enumHandle);
 
+    return true;
 }

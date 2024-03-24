@@ -5,11 +5,28 @@
 
 #pragma comment(lib, "fwpuclnt.lib")
 
-int main() {
-
-    WfpContext wfpContext;
-
-    wfpContext.process();
+int main()
+{
+    try
+    {
+        WfpContext wfpContext;
+        wfpContext.process();
+    }
+    catch(const WfpError& ex)
+    {
+        std::cerr << "Fatal WFP error: " << ex.what() << " Unable to continue." << std::endl;
+        return 1;
+    }
+    catch(const std::exception &ex)
+    {
+        std::cerr << "Fatal error: " << ex.what() << " Unable to continue." << std::endl;
+        return 1;
+    }
+    catch(...)
+    {
+        std::cerr << "Unknown error occurred, unable to continue." << std::endl;
+        return 1;
+    }
 
     return 0;
 }

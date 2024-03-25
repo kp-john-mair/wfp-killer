@@ -7,11 +7,11 @@
 #include "wfp_ostream_helpers.h"
 #include "wfp_name_mapper.h"
 #include <fwpmu.h>
+#include <format>
 
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
-    // Access the FWPM_FILTER's members and print them. Just as an example, let's say it has a name and description.
-    os << "[Id: " << filter.filterId << "]" << " [Weight: " << std::setw(2) << static_cast<int>(filter.weight.uint8) << "] ";
+    os << std::format("[Id: {}] [Weight: {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
 
     os << std::setw(7);
 

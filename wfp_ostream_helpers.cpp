@@ -31,10 +31,20 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
     }
 
     os << WfpNameMapper::convertToFriendlyName(filter.layerKey);
+    os << " ";
 
-    for(size_t conditionCount = 0; conditionCount < filter.numFilterConditions; ++conditionCount)
+    if(filter.numFilterConditions == 0)
     {
-        os << filter.filterCondition[conditionCount];
+        // Indicate there's no conditions
+        os << "None";
+    }
+    else
+    {
+        // Show the filter conditions
+        for(size_t conditionCount = 0; conditionCount < filter.numFilterConditions; ++conditionCount)
+        {
+            os << filter.filterCondition[conditionCount];
+        }
     }
 
     return os;
@@ -42,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& condition)
 {
-    os << " <";
+    os << "<";
     os << WfpNameMapper::convertToFriendlyName(condition.fieldKey);
     os << " ";
 

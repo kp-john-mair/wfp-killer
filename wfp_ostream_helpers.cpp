@@ -119,6 +119,17 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
 
         break;
     }
+    case FWP_V6_ADDR_MASK:
+    {
+        char str[INET6_ADDRSTRLEN]{};
+        InetNtopA(AF_INET6, &condition.conditionValue.v6AddrMask->addr, str, INET6_ADDRSTRLEN);
+
+        os << str;
+        os << " / ";
+        os <<  static_cast<UINT32>(condition.conditionValue.v6AddrMask->prefixLength);
+
+        break;
+    }
 
     default:
         os << "unknown";

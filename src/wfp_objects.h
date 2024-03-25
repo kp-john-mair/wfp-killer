@@ -6,11 +6,14 @@
 #include <fwpmu.h>
 
 namespace wfpk {
+
+// Base error
 class WfpError : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
 
+// RAII wrapper around FWPEngine
 class Engine
 {
 public:
@@ -25,10 +28,11 @@ private:
     HANDLE _handle{};
 };
 
-class WfpContext
+// Core application classs
+class WfpKiller
 {
 public:
-    WfpContext()
+    WfpKiller()
     {}
 
 public:
@@ -38,6 +42,7 @@ private:
     Engine _engine;
 };
 
+// RAII Wrapper around FWPM_FILTER enumeration classes
 class FilterEnum
 {
     enum { MaxFilterCount = 1024 };

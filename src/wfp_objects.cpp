@@ -66,7 +66,7 @@ FilterEnum::~FilterEnum()
     }
 }
 
-bool WfpContext::process()
+bool WfpKiller::process()
 {
     FWPM_FILTER_ENUM_TEMPLATE enumTemplate = {0};
     enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;

@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include "wfp_objects.h"
 
+#pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "fwpuclnt.lib")
 
 int main()

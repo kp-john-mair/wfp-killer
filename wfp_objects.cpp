@@ -1,3 +1,7 @@
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
 #include "wfp_objects.h"
 #include <iostream>
 #include <iomanip>
@@ -236,20 +240,15 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
 
         auto ipToString = [&](UINT32 ipAddress)
         {
-            uint8_t octet1 = (ipAddress >> 24) & 0xFF;
-            uint8_t octet2 = (ipAddress >> 16) & 0xFF;
-            uint8_t octet3 = (ipAddress >> 8) & 0xFF;
-            uint8_t octet4 = ipAddress & 0xFF;
+            char str[INET_ADDRSTRLEN]{};
+            InetNtopA(AF_INET, &ipAddress, str, INET_ADDRSTRLEN);
 
-            os << static_cast<int>(octet1) << "."
-                << static_cast<int>(octet2) << "."
-                << static_cast<int>(octet3) << "."
-                << static_cast<int>(octet4);
+            return std::string{str};
         };
 
-        ipToString(ipAddress);
+        os << ipToString(ntohl(ipAddress));
         os << " / ";
-        ipToString(condition.conditionValue.v4AddrMask->mask);
+        os <<  ipToString(ntohl(condition.conditionValue.v4AddrMask->mask));
 
         break;
     }

@@ -1,6 +1,8 @@
 #include "wfp_objects.h"
 #include <iostream>
 #include <iomanip>
+#include <string>
+#include <algorithm>
 
 namespace
 {
@@ -70,10 +72,8 @@ bool WfpContext::process()
 
     FilterEnum filterEnum{enumTemplate, _engine};
 
-    std::cout << "Creating filterEnum\n";
-
     filterEnum.forEach([](const auto &filter) {
-        std::cout << "Found PIA filter with id " << filter<< std::endl;
+        std::cout << filter << std::endl;
     });
 
     //         result = FwpmFilterDeleteById(_engine, filterId);
@@ -86,63 +86,179 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
     // Access the FWPM_FILTER's members and print them. Just as an example, let's say it has a name and description.
     os << "[Id: " << filter.filterId << "]" << " [Weight: " << std::setw(2) << static_cast<int>(filter.weight.uint8) << "] ";
 
+    os << std::setw(7);
+
     switch(filter.action.type)
     {
     case FWP_ACTION_BLOCK:
-    {
         os << "BLOCK ";
         break;
-    }
     case FWP_ACTION_PERMIT:
-    {
         os << "PERMIT ";
         break;
-    }
     case FWP_ACTION_CALLOUT_TERMINATING:
-    {
         os << "CALLOUT ";
         break;
-    }
     default:
         os << "UNKNOWN ";
     }
 
     if(filter.layerKey == FWPM_LAYER_ALE_AUTH_CONNECT_V4)
     {
-        os << "[Layer: Ipv4 outbound]";
+        os << "[Ipv4 outbound]";
     }
     else if(filter.layerKey == FWPM_LAYER_ALE_AUTH_CONNECT_V6)
     {
-        os << "[Layer: Ipv6 outbound]";
+        os << "[Ipv6 outbound]";
     }
     else if(filter.layerKey == FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4)
     {
-        os << "[Layer: Ipv4 inbound]";
+        os << "[Ipv4 inbound]";
     }
     else if(filter.layerKey == FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6)
     {
-        os << "[Layer: Ipv6 inbound]";
+        os << "[Ipv6 inbound]";
     }
     else if(filter.layerKey == FWPM_LAYER_ALE_BIND_REDIRECT_V4)
     {
-        os << "[Layer: Ipv4 bind-redirect]";
+        os << "[Ipv4 bind-redirect]";
     }
     else if(filter.layerKey == FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4)
     {
-        os << "[Layer: Ipv4 flow-established]";
+        os << "[Ipv4 flow-established]";
     }
     else if(filter.layerKey == FWPM_LAYER_ALE_CONNECT_REDIRECT_V4)
     {
-        os << "[Layer: Ipv4 connect-redirect]";
+        os << "[Ipv4 connect-redirect]";
     }
     else if(filter.layerKey == FWPM_LAYER_INBOUND_IPPACKET_V4)
     {
-        os << "[Layer: Ipv4 packet-inbound]";
+        os << "[Ipv4 packet-inbound]";
     }
     else if(filter.layerKey == FWPM_LAYER_OUTBOUND_IPPACKET_V4)
     {
-        os << "[Layer: Ipv4 packet-outbound]";
+        os << "[Ipv4 packet-outbound]";
     }
+
+    for(size_t conditionCount = 0; conditionCount < filter.numFilterConditions; ++conditionCount)
+    {
+        os << filter.filterCondition[conditionCount];
+    }
+
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& condition)
+{
+    os << " <";
+    if(condition.fieldKey == FWPM_CONDITION_ALE_APP_ID)
+    {
+        os << "app_id ";
+    }
+    else if(condition.fieldKey == FWPM_CONDITION_IP_REMOTE_ADDRESS)
+    {
+        os << "remote_ip ";
+    }
+    else if(condition.fieldKey == FWPM_CONDITION_IP_REMOTE_PORT)
+    {
+        os << "remote_port ";
+    }
+    else if(condition.fieldKey == FWPM_CONDITION_IP_LOCAL_PORT)
+    {
+        os << "local_port ";
+    }
+    else if(condition.fieldKey == FWPM_CONDITION_IP_LOCAL_INTERFACE)
+    {
+        os << "local_interface ";
+    }
+    else
+    {
+        os << "unknown condition ";
+    }
+
+    switch(condition.matchType)
+    {
+    case FWP_MATCH_EQUAL:
+        os << "equals ";
+        break;
+    default:
+        os << "unknown_match_type";
+    }
+
+    // See full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ns-fwptypes-fwp_condition_value0
+    switch(condition.conditionValue.type)
+    {
+    case FWP_EMPTY:
+        os << "empty";
+        break;
+    case FWP_UINT8:
+        os << static_cast<UINT32>(condition.conditionValue.uint8);
+        break;
+    case FWP_UINT16:
+        os << static_cast<UINT32>(condition.conditionValue.uint16);
+        break;
+    case FWP_UINT32:
+        os << static_cast<UINT32>(condition.conditionValue.uint32);
+        break;
+    case FWP_UINT64:
+        os << *condition.conditionValue.uint64;
+        break;
+    case FWP_BYTE_BLOB_TYPE:
+    {
+        UINT8* data = condition.conditionValue.byteBlob->data;
+
+        size_t numChars = condition.conditionValue.byteBlob->size / sizeof(wchar_t) - 1;
+
+        std::string str;
+        std::wstring wstr(reinterpret_cast<const wchar_t*>(data), numChars);
+
+        std::transform(wstr.begin(), wstr.end(), std::back_inserter(str), [] (wchar_t c) {
+            return static_cast<char>(c);
+        });
+
+        auto pos = str.find_last_of('\\');
+
+        if (pos != std::string::npos)
+        {
+            std::string filename = str.substr(pos + 1);
+            os << filename;
+
+        } else
+        {
+           os << str;
+        }
+
+        break;
+    }
+    case FWP_V4_ADDR_MASK:
+    {
+        UINT32 ipAddress = condition.conditionValue.v4AddrMask->addr;
+
+        auto ipToString = [&](UINT32 ipAddress)
+        {
+            uint8_t octet1 = (ipAddress >> 24) & 0xFF;
+            uint8_t octet2 = (ipAddress >> 16) & 0xFF;
+            uint8_t octet3 = (ipAddress >> 8) & 0xFF;
+            uint8_t octet4 = ipAddress & 0xFF;
+
+            os << static_cast<int>(octet1) << "."
+                << static_cast<int>(octet2) << "."
+                << static_cast<int>(octet3) << "."
+                << static_cast<int>(octet4);
+        };
+
+        ipToString(ipAddress);
+        os << " / ";
+        ipToString(condition.conditionValue.v4AddrMask->mask);
+
+        break;
+    }
+
+    default:
+        os << "unknown";
+    }
+
+    os << ">";
 
     return os;
 }

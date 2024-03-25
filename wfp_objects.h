@@ -61,5 +61,5 @@ private:
     HANDLE _enumHandle{};
 };
 
-
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter);
+std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& condition);

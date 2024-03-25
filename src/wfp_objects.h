@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fwpmu.h>
 
+namespace wfpk {
 class WfpError : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
@@ -60,4 +61,4 @@ private:
     HANDLE _engineHandle{};
     HANDLE _enumHandle{};
 };
-
+}

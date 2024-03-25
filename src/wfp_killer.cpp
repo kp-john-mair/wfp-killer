@@ -10,10 +10,10 @@ int main()
 {
     try
     {
-        WfpContext wfpContext;
+        wfpk::WfpContext wfpContext;
         wfpContext.process();
     }
-    catch(const WfpError& ex)
+    catch(const wfpk::WfpError& ex)
     {
         std::cerr << "Fatal WFP error: " << ex.what() << " Unable to continue." << std::endl;
         return 1;

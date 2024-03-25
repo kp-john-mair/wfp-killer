@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-
+namespace wfpk {
 namespace
 {
     // Replace these GUIDs with the actual provider and sublayer GUIDs you want to target
@@ -83,4 +83,5 @@ bool WfpContext::process()
     //         result = FwpmFilterDeleteById(_engine, filterId);
 
     return true;
+}
 }

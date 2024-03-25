@@ -9,6 +9,7 @@
 #include <fwpmu.h>
 #include <format>
 
+namespace wfpk {
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
     os << std::format("[Id: {}] [Weight: {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
@@ -142,4 +143,5 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     os << ">";
 
     return os;
+}
 }

@@ -15,6 +15,7 @@ namespace std
     };
 }
 
+namespace wfpk {
 namespace
 {
     const std::unordered_map<GUID, std::string> kGuidWfpNameMap {
@@ -75,4 +76,4 @@ std::string WfpNameMapper::convertToFriendlyName(const FWP_MATCH_TYPE &matchType
         return "UNKNOWN-MATCHTYPE";
     }
 }
-
+}

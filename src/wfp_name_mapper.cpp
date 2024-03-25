@@ -17,7 +17,7 @@ namespace std
 
 namespace
 {
-    const std::unordered_map<GUID, std::string> kWfpNameMap {
+    const std::unordered_map<GUID, std::string> kGuidWfpNameMap {
         // Layer names, see full list here: https://learn.microsoft.com/en-us/windows/win32/fwp/management-filtering-layer-identifiers-
         { FWPM_LAYER_ALE_AUTH_CONNECT_V4, "[Ipv4 outbound]" },
         { FWPM_LAYER_ALE_AUTH_CONNECT_V6, "[Ipv6 outbound]" },
@@ -37,13 +37,22 @@ namespace
         { FWPM_CONDITION_IP_LOCAL_PORT, "local_port" },
         { FWPM_CONDITION_IP_LOCAL_INTERFACE, "local_interface" },
     };
+
+    // Match types, see full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ne-fwptypes-fwp_match_type
+    const std::unordered_map<FWP_MATCH_TYPE, std::string> kMatchTypeMap {
+        { FWP_MATCH_EQUAL, "equal" },
+        { FWP_MATCH_GREATER, "greater" },
+        { FWP_MATCH_LESS, "less than" },
+        { FWP_MATCH_GREATER_OR_EQUAL, "great or equal" },
+        { FWP_MATCH_LESS_OR_EQUAL, "less or equal" }
+    };
 }
 
-std::string WfpNameMapper::convertToFriendlyName(const GUID& guidName)
+std::string WfpNameMapper::convertToFriendlyName(const GUID &guidName)
 {
-    auto it = kWfpNameMap.find(guidName);
+    auto it = kGuidWfpNameMap.find(guidName);
 
-    if(it != kWfpNameMap.end())
+    if(it != kGuidWfpNameMap.end())
     {
         return it->second;
     }
@@ -52,3 +61,18 @@ std::string WfpNameMapper::convertToFriendlyName(const GUID& guidName)
         return "UNKNOWN-GUID";
     }
 }
+
+std::string WfpNameMapper::convertToFriendlyName(const FWP_MATCH_TYPE &matchType)
+{
+    auto it = kMatchTypeMap.find(matchType);
+
+    if(it != kMatchTypeMap.end())
+    {
+        return it->second;
+    }
+    else
+    {
+        return "UNKNOWN-MATCHTYPE";
+    }
+}
+

@@ -8,13 +8,6 @@
 #include <string>
 
 namespace wfpk {
-namespace
-{
-    // Replace these GUIDs with the actual provider and sublayer GUIDs you want to target
-    constexpr GUID PIA_PROVIDER_KEY = { 0x8de3850, 0xa416, 0x4c47, { 0xb3, 0xad, 0x65, 0x7c, 0x5e, 0xf1, 0x40, 0xfb } };
-    constexpr GUID PIA_SUBLAYER_KEY = { 0xf31e288d, 0xde5a, 0x4522, { 0x94, 0x58, 0xde, 0x14, 0xeb, 0xd0, 0xa3, 0xf8 } };
-}
-
 Engine::Engine()
 : _handle{}
 {
@@ -31,13 +24,19 @@ Engine::~Engine()
     FwpmEngineClose0(_handle);
 }
 
-FilterEnum::FilterEnum(FWPM_FILTER_ENUM_TEMPLATE enumTemplate, HANDLE engineHandle)
+SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle)
 : _numEntries{0}
 , _filters{NULL}
 , _engineHandle{engineHandle}
 , _enumHandle{}
 {
     DWORD result{ERROR_SUCCESS};
+
+    FWPM_FILTER_ENUM_TEMPLATE enumTemplate{};
+    enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;
+    enumTemplate.layerKey = layerKey;
+    enumTemplate.providerKey = const_cast<GUID*>(&PIA_PROVIDER_KEY);
+    enumTemplate.actionMask = 0xFFFFFFFF;
 
     result = FwpmFilterCreateEnumHandle(_engineHandle, &enumTemplate, &_enumHandle);
     if(result != ERROR_SUCCESS)
@@ -52,7 +51,19 @@ FilterEnum::FilterEnum(FWPM_FILTER_ENUM_TEMPLATE enumTemplate, HANDLE engineHand
     }
 }
 
-FilterEnum::~FilterEnum()
+auto SingleLayerFilterEnum::filters() const -> std::vector<FWPM_FILTER>
+{
+    std::vector<FWPM_FILTER> filters;
+    filters.reserve(_numEntries);
+
+    forEach([&](const auto &filter) {
+        filters.push_back(filter);
+    });
+
+    return filters;
+}
+
+SingleLayerFilterEnum::~SingleLayerFilterEnum()
 {
     // Free the memory allocated for the filters array.
     FwpmFreeMemory(reinterpret_cast<void**>(&_filters));
@@ -66,17 +77,17 @@ FilterEnum::~FilterEnum()
     }
 }
 
+FilterEnum::FilterEnum(const std::vector<GUID> &layerKeys, HANDLE engineHandle)
+{
+    for(auto const &layerKey : layerKeys)
+    {
+        _layerEnums.push_back(std::make_unique<SingleLayerFilterEnum>(layerKey, engineHandle));
+    }
+}
+
 bool WfpKiller::process()
 {
-    FWPM_FILTER_ENUM_TEMPLATE enumTemplate = {0};
-    enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;
-    enumTemplate.providerKey = const_cast<GUID*>(&PIA_PROVIDER_KEY);
-    enumTemplate.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V6;
-    enumTemplate.actionMask = 0xFFFFFFFF;
-
-    FilterEnum filterEnum{enumTemplate, _engine};
-
-    filterEnum.forEach([](const auto &filter) {
+    FilterEnum{{FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6}, _engine}.forEach([](const auto &filter) {
         std::cout << filter << std::endl;
     });
 

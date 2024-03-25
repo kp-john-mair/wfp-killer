@@ -58,6 +58,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     os << " ";
 
     os << WfpNameMapper::convertToFriendlyName(condition.matchType);
+    os << " ";
 
     // See full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ns-fwptypes-fwp_condition_value0
     switch(condition.conditionValue.type)

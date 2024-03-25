@@ -24,6 +24,10 @@ class Engine
 {
 public:
     Engine();
+    Engine(Engine&&) = delete;
+    Engine(const Engine&) = delete;
+    Engine& operator=(const Engine&) = delete;
+    Engine& operator=(Engine&&) = delete;
     ~Engine();
 
 public:
@@ -56,6 +60,8 @@ public:
     SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle);
     SingleLayerFilterEnum(SingleLayerFilterEnum&&) = delete;
     SingleLayerFilterEnum(const SingleLayerFilterEnum&) = delete;
+    SingleLayerFilterEnum& operator=(const SingleLayerFilterEnum&) = delete;
+    SingleLayerFilterEnum& operator=(SingleLayerFilterEnum&&) = delete;
     ~SingleLayerFilterEnum();
 
 public:
@@ -77,6 +83,8 @@ private:
     HANDLE _enumHandle{};
 };
 
+// Wraps SingleLayerFilterEnum to allow iteration over
+// multiple WFP layers at once
 class FilterEnum
 {
 public:

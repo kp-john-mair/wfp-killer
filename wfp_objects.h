@@ -1,9 +1,9 @@
 #pragma once
 
 #include <windows.h>
-#include <fwpmu.h>
 #include <stdexcept>
 #include <iostream>
+#include <fwpmu.h>
 
 class WfpError : public std::runtime_error
 {
@@ -61,5 +61,3 @@ private:
     HANDLE _enumHandle{};
 };
 
-std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter);
-std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& condition);

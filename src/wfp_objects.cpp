@@ -87,7 +87,8 @@ FilterEnum::FilterEnum(const std::vector<GUID> &layerKeys, HANDLE engineHandle)
 
 bool WfpKiller::process()
 {
-    FilterEnum{{FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6}, _engine}.forEach([](const auto &filter) {
+    std::vector layerKeys = {FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6};
+    _engine.enumerateFiltersForLayers(layerKeys, [](const auto &filter) {
         std::cout << filter << std::endl;
     });
 

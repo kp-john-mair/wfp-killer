@@ -19,6 +19,9 @@ class WfpError : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+class SingleLayerFilterEnum;
+class FilterEnum;
+
 // RAII wrapper around FWPEngine
 class Engine
 {
@@ -31,6 +34,13 @@ public:
     ~Engine();
 
 public:
+    // Iterate over all filters for all given layers
+    template <typename IterFuncT>
+    void enumerateFiltersForLayers(const std::vector<GUID> &layerKeys, IterFuncT func)
+    {
+        FilterEnum{layerKeys, _handle}.forEach(func);
+    }
+
     auto handle() -> const HANDLE& { return _handle; }
     operator HANDLE() { return handle(); }
 

@@ -48,10 +48,13 @@ namespace
         { FWP_MATCH_LESS_OR_EQUAL, "less or equal" }
     };
 
+    // Action types, see full list: https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_action0
     const std::unordered_map<UINT32, std::string> kActionTypeMap {
         { FWP_ACTION_BLOCK, "block" },
         { FWP_ACTION_PERMIT, "permit" },
-        { FWP_ACTION_CALLOUT_TERMINATING, "callout" }
+        { FWP_ACTION_CALLOUT_TERMINATING, "callout" },
+        { FWP_ACTION_CALLOUT_INSPECTION, "callout_inspection" },
+        { FWP_ACTION_CALLOUT_UNKNOWN, "callout-unknown" }
     };
 
     // Generic lookup function with fallback

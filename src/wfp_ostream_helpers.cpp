@@ -13,26 +13,9 @@ namespace wfpk {
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
     os << std::format("[Id: {}] [Weight: {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
-
     os << std::setw(8);
-
-    switch(filter.action.type)
-    {
-    case FWP_ACTION_BLOCK:
-        os << "BLOCK ";
-        break;
-    case FWP_ACTION_PERMIT:
-        os << "PERMIT ";
-        break;
-    case FWP_ACTION_CALLOUT_TERMINATING:
-        os << "CALLOUT ";
-        break;
-    default:
-        os << "UNKNOWN ";
-    }
-
-    os << WfpNameMapper::convertToFriendlyName(filter.layerKey);
-    os << " ";
+    os << WfpNameMapper::convertToFriendlyName<WFPK_ACTION_TYPE>(filter.action.type) << " ";
+    os << WfpNameMapper::convertToFriendlyName(filter.layerKey) << " ";
 
     if(filter.numFilterConditions == 0)
     {
@@ -44,7 +27,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
         // Show the filter conditions
         for(size_t conditionCount = 0; conditionCount < filter.numFilterConditions; ++conditionCount)
         {
-            os << filter.filterCondition[conditionCount];
+            os << filter.filterCondition[conditionCount] << " ";
         }
     }
 
@@ -54,11 +37,8 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& condition)
 {
     os << "<";
-    os << WfpNameMapper::convertToFriendlyName(condition.fieldKey);
-    os << " ";
-
-    os << WfpNameMapper::convertToFriendlyName(condition.matchType);
-    os << " ";
+    os << WfpNameMapper::convertToFriendlyName(condition.fieldKey) << " ";
+    os << WfpNameMapper::convertToFriendlyName(condition.matchType) << " ";
 
     // See full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ns-fwptypes-fwp_condition_value0
     switch(condition.conditionValue.type)
@@ -94,7 +74,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
 
         auto pos = str.find_last_of('\\');
 
-        if (pos != std::string::npos)
+        if(pos != std::string::npos)
         {
             std::string filename = str.substr(pos + 1);
             os << filename;

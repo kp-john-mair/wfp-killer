@@ -47,33 +47,45 @@ namespace
         { FWP_MATCH_GREATER_OR_EQUAL, "great or equal" },
         { FWP_MATCH_LESS_OR_EQUAL, "less or equal" }
     };
+
+    const std::unordered_map<UINT32, std::string> kActionTypeMap {
+        { FWP_ACTION_BLOCK, "block" },
+        { FWP_ACTION_PERMIT, "permit" },
+        { FWP_ACTION_CALLOUT_TERMINATING, "callout" }
+    };
+
+    // Generic lookup function with fallback
+    template <typename MapT, typename KeyT>
+    std::string nameLookup(const MapT &map, const KeyT &key, const std::string &unknownFallback)
+    {
+        auto it = map.find(key);
+
+        if(it != map.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return unknownFallback;
+        }
+    }
 }
 
 std::string WfpNameMapper::convertToFriendlyName(const GUID &guidName)
 {
-    auto it = kGuidWfpNameMap.find(guidName);
 
-    if(it != kGuidWfpNameMap.end())
-    {
-        return it->second;
-    }
-    else
-    {
-        return "UNKNOWN-GUID";
-    }
+    return nameLookup(kGuidWfpNameMap, guidName, "UNKNOWN-GUID");
 }
 
 std::string WfpNameMapper::convertToFriendlyName(const FWP_MATCH_TYPE &matchType)
 {
-    auto it = kMatchTypeMap.find(matchType);
 
-    if(it != kMatchTypeMap.end())
-    {
-        return it->second;
-    }
-    else
-    {
-        return "UNKNOWN-MATCHTYPE";
-    }
+    return nameLookup(kMatchTypeMap, matchType, "UNKNOWN-MATCHTYPE");
+}
+
+template <>
+static std::string WfpNameMapper::convertToFriendlyName<WFPK_ACTION_TYPE>(UINT32 value)
+{
+    return nameLookup(kActionTypeMap, value, "UNKNOWN-ACTIONTYPE");
 }
 }

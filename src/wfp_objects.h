@@ -48,20 +48,6 @@ private:
     HANDLE _handle{};
 };
 
-// Core application classs
-class WfpKiller
-{
-public:
-    WfpKiller()
-    {}
-
-public:
-    bool process();
-
-private:
-    Engine _engine;
-};
-
 // RAII Wrapper around FWPM_FILTER enumeration classes
 class SingleLayerFilterEnum
 {

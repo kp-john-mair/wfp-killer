@@ -84,16 +84,4 @@ FilterEnum::FilterEnum(const std::vector<GUID> &layerKeys, HANDLE engineHandle)
         _layerEnums.push_back(std::make_unique<SingleLayerFilterEnum>(layerKey, engineHandle));
     }
 }
-
-bool WfpKiller::process()
-{
-    std::vector layerKeys = {FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6};
-    _engine.enumerateFiltersForLayers(layerKeys, [](const auto &filter) {
-        std::cout << filter << std::endl;
-    });
-
-    //         result = FwpmFilterDeleteById(_engine, filterId);
-
-    return true;
-}
 }

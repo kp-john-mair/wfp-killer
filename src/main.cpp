@@ -1,11 +1,9 @@
 #include <iostream>
-#include <vector>
 #include <stdexcept>
+#include <Shlobj.h> // For IsUserAnAdmin()
 #include "wfp_objects.h"
 
-// For IsUserAnAdmin()
-#include <Shlobj.h>
-
+// Instruct the compiler to link these libs for us
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "fwpuclnt.lib")
 #pragma comment(lib, "Shell32.lib")

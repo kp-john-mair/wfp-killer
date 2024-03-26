@@ -10,3 +10,6 @@ add_executable(WFPKiller
     src/wfp_objects.cpp
     src/wfp_name_mapper.cpp
     src/wfp_ostream_helpers.cpp)
+
+# Include the header-only library directory
+target_include_directories(WFPKiller PRIVATE vendor/argh/include)

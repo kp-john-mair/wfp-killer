@@ -7,11 +7,8 @@ namespace wfpk {
 class WfpKiller
 {
 public:
-    WfpKiller()
-    {}
-
-public:
-    bool process();
+    void listFilters() const;
+    void deleteFilters(const std::vector<FilterId> &filterIds) const;
 
 private:
     Engine _engine;

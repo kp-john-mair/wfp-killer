@@ -12,6 +12,8 @@
 namespace wfpk {
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
+    // TODO: Treat filter weights in a more generic way - PIA just uses a uint8, but that
+    // won't be true of all providers
     os << std::format("[Id: {}] [Weight: {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
     os << std::setw(8);
     os << WfpNameMapper::convertToFriendlyName<WFPK_ACTION_TYPE>(filter.action.type) << " ";

@@ -4,10 +4,12 @@
 #include <stdexcept>
 #include <iostream>
 #include <vector>
+#include <set>
 #include <memory>
 #include <fwpmu.h>
 
 namespace wfpk {
+    using FilterId = UINT64;
 
 // PIA-specific data
 inline constexpr GUID PIA_PROVIDER_KEY = { 0x8de3850, 0xa416, 0x4c47, { 0xb3, 0xad, 0x65, 0x7c, 0x5e, 0xf1, 0x40, 0xfb } };
@@ -36,9 +38,15 @@ public:
 public:
     // Iterate over all filters for all given layers
     template <typename IterFuncT>
-    void enumerateFiltersForLayers(const std::vector<GUID> &layerKeys, IterFuncT func)
+    void enumerateFiltersForLayers(const std::vector<GUID> &layerKeys, IterFuncT func) const
     {
         FilterEnum{layerKeys, _handle}.forEach(func);
+    }
+
+    template <typename IterFuncT>
+    void enumerateFiltersForLayer(const GUID& layerKey, IterFuncT func) const
+    {
+        SingleLayerFilterEnum{layerKey, _handle}.forEach(func);
     }
 
     auto handle() -> const HANDLE& { return _handle; }
@@ -61,16 +69,35 @@ public:
     ~SingleLayerFilterEnum();
 
 public:
+    // Ensure filters are sorted by weight
+    struct FilterCompare
+    {
+        bool operator()(const FWPM_FILTER &lhs, const FWPM_FILTER &rhs) const
+        {
+            // TODO: uint8 weight is unique to PIA - make this
+            // more general.
+            return lhs.weight.uint8 > rhs.weight.uint8;
+        }
+    };
+
+    // Use a multiset so we can have multiple filters of the same weight
+    using FilterSet = std::multiset<FWPM_FILTER, FilterCompare>;
+
+public:
     template <typename IterFuncT>
     void forEach(IterFuncT func) const
     {
-        for(size_t i = 0; i < _numEntries; ++i)
+        const auto &sortedFilters = filters();
+
+        for(const auto &filter : sortedFilters)
         {
-            func(*_filters[i]);
+            func(filter);
         }
     }
 
-    auto filters() const -> std::vector<FWPM_FILTER>;
+private:
+    // Ensure the filters are sorted
+    auto filters() const -> FilterSet;
 
 private:
     UINT32 _numEntries{0};

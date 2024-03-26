@@ -3,7 +3,6 @@
 #include <ws2tcpip.h>
 
 #include "wfp_objects.h"
-#include "wfp_ostream_helpers.h"
 #include <iostream>
 #include <string>
 
@@ -51,14 +50,27 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
     }
 }
 
-auto SingleLayerFilterEnum::filters() const -> std::vector<FWPM_FILTER>
+// TODO: This is currently very brittle - if/when SingleLayerFilterEnum
+// goes out of scope all the filters become invalid as they have
+// pointer fields such as providerKey and filterCondition which
+// will be cleaned up by the call to FwpmFreeMemory in the SingleLayerFilterEnum destructor.
+// We should probably make deep copies of these filters into a new
+// Filter class which has the same fields but no pointer members; instead it should
+// have deep copies of all the FWPM_FILTER data. This would make the filters
+// immune to their parent object (SingleLayerFilterEnum) going out of scope.
+// Right now it's all too easy to hold onto a FWPM_FILTER object beyond the
+// life-time of SingleLayerFilterEnum.
+auto SingleLayerFilterEnum::filters() const -> FilterSet
 {
-    std::vector<FWPM_FILTER> filters;
-    filters.reserve(_numEntries);
+    FilterSet filters;
 
-    forEach([&](const auto &filter) {
-        filters.push_back(filter);
-    });
+    for(size_t idx = 0; idx < _numEntries; ++idx)
+    {
+        // TODO: Make sure each filter object is a deep copy
+        // in a new "Filter" object whose life-time is independent
+        // of the parent class
+        filters.insert(*_filters[idx]);
+    }
 
     return filters;
 }

@@ -1,16 +1,38 @@
+#include <format>
 #include "wfp_killer.h"
 #include "wfp_ostream_helpers.h"
+#include "wfp_name_mapper.h"
 
 namespace wfpk {
-bool WfpKiller::process()
+
+namespace
 {
-    std::vector layerKeys = {FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6};
-    _engine.enumerateFiltersForLayers(layerKeys, [](const auto &filter) {
-        std::cout << filter << std::endl;
-    });
+    const std::vector kPiaLayers = {
+        FWPM_LAYER_ALE_AUTH_CONNECT_V4,
+        FWPM_LAYER_ALE_AUTH_CONNECT_V6,
+        FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4,
+        FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6,
+        FWPM_LAYER_ALE_BIND_REDIRECT_V4,
+        FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4,
+        FWPM_LAYER_ALE_CONNECT_REDIRECT_V4,
+        FWPM_LAYER_INBOUND_IPPACKET_V4,
+        FWPM_LAYER_OUTBOUND_IPPACKET_V4
+    };
+}
 
-    //         result = FwpmFilterDeleteById(_engine, filterId);
+void WfpKiller::listFilters() const
+{
+    for(const auto &layerKey : kPiaLayers)
+    {
+        std::cout << std::format("\nLayer: {}\n", WfpNameMapper::convertToFriendlyName(layerKey));
+        _engine.enumerateFiltersForLayer(layerKey, [](const auto &filter) {
+            std::cout << filter << std::endl;
+        });
+    }
+}
 
-    return true;
+void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
+{
+//         result = FwpmFilterDeleteById(_engine, filterId);
 }
 }

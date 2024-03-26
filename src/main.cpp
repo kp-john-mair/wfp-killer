@@ -2,13 +2,14 @@
 #include <stdexcept>
 #include <Shlobj.h> // For IsUserAnAdmin()
 #include "wfp_killer.h"
+#include "argh.h"
 
 // Instruct the compiler to link these libs for us
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "fwpuclnt.lib")
 #pragma comment(lib, "Shell32.lib")
 
-int main()
+int main(int argc, char** argv)
 {
     if(IsUserAnAdmin() == FALSE)
     {
@@ -16,10 +17,17 @@ int main()
         return 1;
     }
 
+    argh::parser cmdl(argv);
+
+    wfpk::WfpKiller wfpKiller;
+
     try
     {
-        wfpk::WfpKiller wfpKiller;
-        wfpKiller.process();
+        if(cmdl[{ "-l", "--list"}])
+        {
+            wfpKiller.listFilters();
+            return 0;
+        }
     }
     catch(const wfpk::WfpError& ex)
     {

@@ -11,6 +11,9 @@ public:
     void deleteFilters(const std::vector<FilterId> &filterIds) const;
 
 private:
+    bool deleteSingleFilter(FilterId filterId) const;
+
+private:
     Engine _engine;
 };
 }

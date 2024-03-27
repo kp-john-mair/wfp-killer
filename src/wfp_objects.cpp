@@ -18,6 +18,11 @@ Engine::Engine()
     }
 }
 
+DWORD Engine::deleteFilterById(FilterId filterId) const
+{
+    return FwpmFilterDeleteById(_handle, filterId);
+}
+
 Engine::~Engine()
 {
     FwpmEngineClose0(_handle);

@@ -40,6 +40,46 @@ void WfpKiller::listFilters() const
 
 void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
 {
-    std::cout << std::format("Will delete {} filters\n", filterIds.size());
+    uint32_t deleteCount{0};
+
+    if(filterIds.size() > 0)
+    {
+        std::cout << std::format("Will delete {} filters\n", filterIds.size());
+        for(const auto &filterId : filterIds)
+        {
+            if(deleteSingleFilter(filterId))
+                ++deleteCount;
+        }
+    }
+    else
+    {
+        std::cout << "This action will delete ALL PIA filters\nAre you sure? (y/n)\n";
+        char userDecision{};
+        std::cin >> userDecision;
+        if(userDecision == 'y')
+        {
+            _engine.enumerateFiltersForLayers(kPiaLayers, [&](const auto &filter) {
+                if(deleteSingleFilter(filter.filterId))
+                    ++deleteCount;
+            });
+        }
+    }
+
+    std::cout << std::format("Deleted {} filters.\n", deleteCount);
+}
+
+bool WfpKiller::deleteSingleFilter(FilterId filterId) const
+{
+    DWORD result = _engine.deleteFilterById(filterId);
+    if(result != ERROR_SUCCESS)
+    {
+        std::cerr << std::format("Error: Failed to delete filter with id {} Code: {}\n", filterId, result);
+        return false;
+    }
+    else
+    {
+        std::cout << std::format("Successfully deleted filter with id {}.\n", filterId);
+        return true;
+    }
 }
 }

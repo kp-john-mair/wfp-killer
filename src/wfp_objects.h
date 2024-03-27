@@ -43,11 +43,15 @@ public:
         FilterEnum{layerKeys, _handle}.forEach(func);
     }
 
+    // Iterate over filters for just one layer
     template <typename IterFuncT>
     void enumerateFiltersForLayer(const GUID& layerKey, IterFuncT func) const
     {
         SingleLayerFilterEnum{layerKey, _handle}.forEach(func);
     }
+
+    // Delete a filter by Id
+    DWORD deleteFilterById(FilterId filerId) const;
 
     auto handle() -> const HANDLE& { return _handle; }
     operator HANDLE() { return handle(); }

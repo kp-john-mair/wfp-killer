@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <ranges>
 #include <Shlobj.h> // For IsUserAnAdmin()
 #include "wfp_killer.h"
 #include "wfp_objects.h"
@@ -46,11 +47,19 @@ int main(int argc, char** argv)
         {
             const auto &filterIdStrs = result["delete"].as<std::vector<std::string>>();
 
-            std::vector<wfpk::FilterId> filterIds;
-            filterIds.reserve(filterIdStrs.size());
+            // Whether we should delete all filters (did the user pass in '-d all' ?)
+            bool shouldDeleteAllFilters = std::ranges::find(filterIdStrs, "all") != filterIdStrs.end();
 
-            for(const auto &filterIdStr : filterIdStrs)
-                filterIds.push_back(std::stoull(filterIdStr));
+            std::vector<wfpk::FilterId> filterIds;
+
+            // Empty filterIds vector means we delete all filters
+            // If we shouldn't delete all - then we fill it with ids
+            if(!shouldDeleteAllFilters)
+            {
+                filterIds.reserve(filterIdStrs.size());
+                for(const auto &filterIdStr : filterIdStrs)
+                    filterIds.push_back(std::stoull(filterIdStr));
+            }
 
             wfpKiller.deleteFilters(filterIds);
 

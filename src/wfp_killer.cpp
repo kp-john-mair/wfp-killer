@@ -22,17 +22,24 @@ namespace
 
 void WfpKiller::listFilters() const
 {
+    size_t filterCount{0};
+
+    std::cout << "Showing all filters for PIA provider:\n";
+
     for(const auto &layerKey : kPiaLayers)
     {
         std::cout << std::format("\nLayer: {}\n", WfpNameMapper::convertToFriendlyName(layerKey));
-        _engine.enumerateFiltersForLayer(layerKey, [](const auto &filter) {
+        _engine.enumerateFiltersForLayer(layerKey, [&](const auto &filter) {
             std::cout << filter << std::endl;
+            ++filterCount;
         });
     }
+
+    std::cout << std::format("\nTotal number of filters: {}\n", filterCount);
 }
 
 void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
 {
-//         result = FwpmFilterDeleteById(_engine, filterId);
+    std::cout << std::format("Will delete {} filters\n", filterIds.size());
 }
 }

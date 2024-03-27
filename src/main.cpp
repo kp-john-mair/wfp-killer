@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <Shlobj.h> // For IsUserAnAdmin()
 #include "wfp_killer.h"
+#include "wfp_objects.h"
 #include "cxxopts.h"
 
 // Instruct the compiler to link these libs for us
@@ -36,15 +37,23 @@ int main(int argc, char** argv)
           std::cout << options.help();
           return 0;
         }
-        if(result.count("list"))
+        else if(result.count("list"))
         {
             wfpKiller.listFilters();
             return 0;
         }
         else if(result.count("delete"))
         {
-          // uint64_t value = std::stoull(str);
-            std::cout << "Got delete\n";
+            const auto &filterIdStrs = result["delete"].as<std::vector<std::string>>();
+
+            std::vector<wfpk::FilterId> filterIds;
+            filterIds.reserve(filterIdStrs.size());
+
+            for(const auto &filterIdStr : filterIdStrs)
+                filterIds.push_back(std::stoull(filterIdStr));
+
+            wfpKiller.deleteFilters(filterIds);
+
             return 0;
         }
         else

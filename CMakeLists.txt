@@ -12,4 +12,4 @@ add_executable(WFPKiller
     src/wfp_ostream_helpers.cpp)
 
 # Include the header-only library directory
-target_include_directories(WFPKiller PRIVATE vendor/argh/include)
+target_include_directories(WFPKiller PRIVATE vendor/cxxopts/include)

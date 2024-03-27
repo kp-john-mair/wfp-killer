@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <Shlobj.h> // For IsUserAnAdmin()
 #include "wfp_killer.h"
-#include "argh.h"
+#include "cxxopts.h"
 
 // Instruct the compiler to link these libs for us
 #pragma comment(lib, "Ws2_32.lib")
@@ -17,16 +17,41 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    argh::parser cmdl(argv);
+    cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
+
+    options.allow_unrecognised_options();
+    options.add_options()
+        ("h,help", "Display this help message.")
+        ("l,list", "List all PIA filters.")
+        ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all')", cxxopts::value<std::vector<std::string>>());
 
     wfpk::WfpKiller wfpKiller;
 
     try
     {
-        if(cmdl[{ "-l", "--list"}])
+        auto result = options.parse(argc, argv);
+
+        if(result.count("help"))
+        {
+          std::cout << options.help();
+          return 0;
+        }
+        if(result.count("list"))
         {
             wfpKiller.listFilters();
             return 0;
+        }
+        else if(result.count("delete"))
+        {
+          // uint64_t value = std::stoull(str);
+            std::cout << "Got delete\n";
+            return 0;
+        }
+        else
+        {
+            std::cout << "Options are required.\n\n";
+            std::cout << options.help();
+            return 1;
         }
     }
     catch(const wfpk::WfpError& ex)

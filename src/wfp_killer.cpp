@@ -29,8 +29,8 @@ void WfpKiller::listFilters() const
     for(const auto &layerKey : kPiaLayers)
     {
         std::cout << std::format("\nLayer: {}\n", WfpNameMapper::convertToFriendlyName(layerKey));
-        _engine.enumerateFiltersForLayer(layerKey, [&](const auto &filter) {
-            std::cout << filter << std::endl;
+        _engine.enumerateFiltersForLayer(layerKey, [&](const auto &pFilter) {
+            std::cout << *pFilter << std::endl;
             ++filterCount;
         });
     }
@@ -58,8 +58,8 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
         std::cin >> userDecision;
         if(userDecision == 'y')
         {
-            _engine.enumerateFiltersForLayers(kPiaLayers, [&](const auto &filter) {
-                if(deleteSingleFilter(filter.filterId))
+            _engine.enumerateFiltersForLayers(kPiaLayers, [&](const auto &pFilter) {
+                if(deleteSingleFilter(pFilter->filterId))
                     ++deleteCount;
             });
         }

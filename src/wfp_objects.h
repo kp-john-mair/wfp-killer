@@ -21,6 +21,16 @@ class WfpError : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+struct WfpDeleter
+{
+    template <typename WfpPtr>
+    void operator()(WfpPtr *ptr) const
+    {
+        if(ptr)
+            FwpmFreeMemory(reinterpret_cast<void**>(&ptr));
+    }
+};
+
 class SingleLayerFilterEnum;
 class FilterEnum;
 
@@ -70,44 +80,39 @@ public:
     SingleLayerFilterEnum(const SingleLayerFilterEnum&) = delete;
     SingleLayerFilterEnum& operator=(const SingleLayerFilterEnum&) = delete;
     SingleLayerFilterEnum& operator=(SingleLayerFilterEnum&&) = delete;
-    ~SingleLayerFilterEnum();
 
-public:
+private:
     // Ensure filters are sorted by weight
     struct FilterCompare
     {
-        bool operator()(const FWPM_FILTER &lhs, const FWPM_FILTER &rhs) const
+        template <typename PtrT>
+        bool operator()(const PtrT &lhs, const PtrT &rhs) const
         {
             // TODO: uint8 weight is unique to PIA - make this
             // more general.
-            return lhs.weight.uint8 > rhs.weight.uint8;
+            return lhs->weight.uint8 > rhs->weight.uint8;
         }
     };
 
     // Use a multiset so we can have multiple filters of the same weight
-    using FilterSet = std::multiset<FWPM_FILTER, FilterCompare>;
+    using FilterSet = std::multiset<std::shared_ptr<FWPM_FILTER>, FilterCompare>;
 
 public:
     template <typename IterFuncT>
     void forEach(IterFuncT func) const
     {
-        const auto &sortedFilters = filters();
-
-        for(const auto &filter : sortedFilters)
+        for(const auto &filter : _pFilters)
         {
             func(filter);
         }
     }
 
-private:
-    // Ensure the filters are sorted
-    auto filters() const -> FilterSet;
+public:
+    const FilterSet& filters() const { return _pFilters; }
 
 private:
-    UINT32 _numEntries{0};
-    FWPM_FILTER** _filters{NULL};
     HANDLE _engineHandle{};
-    HANDLE _enumHandle{};
+    FilterSet _pFilters;
 };
 
 // Wraps SingleLayerFilterEnum to allow iteration over
@@ -115,22 +120,25 @@ private:
 class FilterEnum
 {
 public:
-    FilterEnum(const std::vector<GUID> &layers, HANDLE engineHandle);
+    FilterEnum(const std::vector<GUID> &layers, HANDLE engineHandle)
+    : _engineHandle{engineHandle}
+    , _layers{layers}
+    {}
 
 public:
     template <typename IterFuncT>
     void forEach(IterFuncT func) const
     {
-        for(const auto &layerEnum : _layerEnums)
+        for(const auto &layer : _layers)
         {
-            layerEnum->forEach([&](const auto &filter) {
-                func(filter);
+            SingleLayerFilterEnum{layer, _engineHandle}.forEach([&](const auto &pFilter) {
+                func(pFilter);
             });
         }
     }
 
 private:
+    HANDLE _engineHandle{};
     std::vector<GUID> _layers;
-    std::vector<std::unique_ptr<SingleLayerFilterEnum>> _layerEnums;
 };
 }

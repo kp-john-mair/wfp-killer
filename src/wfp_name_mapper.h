@@ -13,6 +13,7 @@ enum WFPK_TYPES
     WFPK_ACTION_TYPE
 };
 
+// Maps a WFP name to something human readable
 class WfpNameMapper
 {
 public:
@@ -21,5 +22,8 @@ public:
 
     template <WFPK_TYPES type>
     static std::string convertToFriendlyName(UINT32 value);
+
+    template <>
+    static std::string convertToFriendlyName<WFPK_ACTION_TYPE>(UINT32 value);
 };
 }

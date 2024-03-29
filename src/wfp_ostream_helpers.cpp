@@ -16,8 +16,8 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
     // won't be true of all providers
     os << std::format("[Id: {}] [Weight: {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
     os << std::setw(8);
-    os << WfpNameMapper::convertToFriendlyName<WFPK_ACTION_TYPE>(filter.action.type) << " ";
-    os << WfpNameMapper::convertToFriendlyName(filter.layerKey) << " ";
+    os << WfpNameMapper::getName<WFPK_ACTION_TYPE>(filter.action.type).friendlyName << " ";
+    os << WfpNameMapper::getName(filter.layerKey).friendlyName << " ";
 
     if(filter.numFilterConditions == 0)
     {
@@ -39,8 +39,8 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& condition)
 {
     os << "<";
-    os << WfpNameMapper::convertToFriendlyName(condition.fieldKey) << " ";
-    os << WfpNameMapper::convertToFriendlyName(condition.matchType) << " ";
+    os << WfpNameMapper::getName(condition.fieldKey).friendlyName << " ";
+    os << WfpNameMapper::getName(condition.matchType).friendlyName << " ";
 
     // See full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ns-fwptypes-fwp_condition_value0
     switch(condition.conditionValue.type)

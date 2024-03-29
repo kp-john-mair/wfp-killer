@@ -97,6 +97,9 @@ private:
     // Use a multiset so we can have multiple filters of the same weight
     using FilterSet = std::multiset<std::shared_ptr<FWPM_FILTER>, FilterCompare>;
 
+    // Build the enumeration template
+    auto createEnumTemplate(const GUID &layerKey) const -> FWPM_FILTER_ENUM_TEMPLATE;
+
 public:
     template <typename IterFuncT>
     void forEach(IterFuncT func) const
@@ -107,7 +110,6 @@ public:
         }
     }
 
-public:
     const FilterSet& filters() const { return _pFilters; }
 
 private:

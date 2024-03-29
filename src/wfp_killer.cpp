@@ -28,7 +28,7 @@ void WfpKiller::listFilters() const
 
     for(const auto &layerKey : kPiaLayers)
     {
-        std::cout << std::format("\nLayer: {}\n", WfpNameMapper::convertToFriendlyName(layerKey));
+        std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
         _engine.enumerateFiltersForLayer(layerKey, [&](const auto &pFilter) {
             std::cout << *pFilter << std::endl;
             ++filterCount;

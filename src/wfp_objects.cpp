@@ -37,16 +37,24 @@ Engine::~Engine()
     }
 }
 
-SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle)
-: _engineHandle{engineHandle}
+auto SingleLayerFilterEnum::createEnumTemplate(const GUID &layerKey) const
+    -> FWPM_FILTER_ENUM_TEMPLATE
 {
-    DWORD result{ERROR_SUCCESS};
-
     FWPM_FILTER_ENUM_TEMPLATE enumTemplate{};
     enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;
     enumTemplate.layerKey = layerKey;
     enumTemplate.providerKey = const_cast<GUID*>(&PIA_PROVIDER_KEY);
     enumTemplate.actionMask = 0xFFFFFFFF;
+
+    return enumTemplate;
+}
+
+SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle)
+: _engineHandle{engineHandle}
+{
+    DWORD result{ERROR_SUCCESS};
+
+    FWPM_FILTER_ENUM_TEMPLATE enumTemplate{createEnumTemplate(layerKey)};
 
     HANDLE enumHandle{};
     result = FwpmFilterCreateEnumHandle(_engineHandle, &enumTemplate, &enumHandle);
@@ -67,6 +75,7 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
     for(size_t i = 0; i < numEntries; ++i)
     {
         FWPM_FILTER *pFilter{nullptr};
+        // Grab a new filter so that we can carefully manage its lifetime
         DWORD result = FwpmFilterGetById(_engineHandle, pFilters[i]->filterId, &pFilter);
         if(result == ERROR_SUCCESS)
             _pFilters.insert(std::shared_ptr<FWPM_FILTER>{pFilter, WfpDeleter{}});

@@ -4,6 +4,15 @@
 #include <string>
 
 namespace wfpk {
+    // The names of a WFP entity.
+    // Both the friendlyName (human readable) as well as the
+    // raw WFP name (often more arcane).
+    struct WfpName
+    {
+        std::string friendlyName;
+        std::string rawName;
+    };
+
 // Our own enum mapping of non-enum types such as FWP_ACTION_TYPE
 // which is just an alias for a UINT32 - so we map it to an enum value
 // so that we can provide a template specialization for looking up its
@@ -17,13 +26,15 @@ enum WFPK_TYPES
 class WfpNameMapper
 {
 public:
-    static std::string convertToFriendlyName(const GUID& guidName);
-    static std::string convertToFriendlyName(const FWP_MATCH_TYPE &matchType);
+    static WfpName getName(const GUID& guidName);
+    static WfpName getName(const FWP_MATCH_TYPE &matchType);
 
+    // Primary template (not implemented)
     template <WFPK_TYPES type>
-    static std::string convertToFriendlyName(UINT32 value);
+    static WfpName getName(UINT32 value);
 
+    // Full specialization of above
     template <>
-    static std::string convertToFriendlyName<WFPK_ACTION_TYPE>(UINT32 value);
+    static WfpName getName<WFPK_ACTION_TYPE>(UINT32 value);
 };
 }

@@ -72,6 +72,8 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
 
 void CALLBACK foo(void *context, const FWPM_NET_EVENT *event)
 {
+
+/*
         uint64_t *ptr = reinterpret_cast<uint64_t*>(context);
         *ptr = 100;
         std::cout << "Some event occured" << std::endl;
@@ -84,14 +86,22 @@ void CALLBACK foo(void *context, const FWPM_NET_EVENT *event)
             std::cout << "Allow event" << std::endl;;
             break;
         }
+        */
 }
 
 void WfpKiller::monitor()
 {
-    _engine.monitorEvents([](auto *context, const auto *event) {
-        uint64_t* pCount =reinterpret_cast<uint64_t*>(context);
-        (*pCount)++;
-        std::cout << "Some event occured" << std::endl;
+    _engine.monitorEvents([](void *context, const FWPM_NET_EVENT *event) {
+        std::cout << *event << "\n";
+        switch(event->type)
+        {
+        case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
+            std::cout << "drop event\n";
+            break;
+        case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
+            std::cout << "allow event\n";
+            break;
+        }
     });
 
     std::cin.get();

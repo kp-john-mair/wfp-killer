@@ -10,6 +10,48 @@
 #include <format>
 
 namespace wfpk {
+namespace
+{
+    std::string ipToString(UINT32 ipAddress)
+    {
+        char str[INET_ADDRSTRLEN]{};
+        InetNtopA(AF_INET, &ipAddress, str, INET_ADDRSTRLEN);
+
+        return std::string{str};
+    }
+
+    std::string blobToString(const FWP_BYTE_BLOB &blob)
+    {
+        UINT8* data = blob.data;
+        size_t numChars = blob.size / sizeof(wchar_t) - 1;
+
+        std::string str;
+        std::wstring wstr(reinterpret_cast<const wchar_t*>(data), numChars);
+
+        // hack to convert wide strings to strings
+        std::transform(wstr.begin(), wstr.end(), std::back_inserter(str), [] (wchar_t c) {
+            return static_cast<char>(c);
+        });
+
+        return str;
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
+{
+    const FWPM_NET_EVENT_HEADER &header = event.header;
+
+    if(header.ipProtocol == AF_INET6)
+    {
+        os << "IPv6 not yet supported";
+        return os;
+    }
+
+    os << std::format("{} {}:{} -> {}:{}", blobToString(header.appId), ipToString(ntohl(header.localAddrV4)), header.localPort, ipToString(ntohl(header.remoteAddrV4)), header.remotePort);
+
+    return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
     // TODO: Treat filter weights in a more generic way - PIA just uses a uint8, but that

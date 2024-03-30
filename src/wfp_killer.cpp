@@ -86,13 +86,13 @@ void CALLBACK foo(void *context, const FWPM_NET_EVENT *event)
         }
 }
 
-void WfpKiller::monitor() const
+void WfpKiller::monitor()
 {
     _engine.monitorEvents([](auto *context, const auto *event) {
+        uint64_t* pCount =reinterpret_cast<uint64_t*>(context);
+        (*pCount)++;
         std::cout << "Some event occured" << std::endl;
     });
-
-
 
     std::cin.get();
 

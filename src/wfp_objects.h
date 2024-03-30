@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <memory>
+#include <optional>
 #include <fwpmu.h>
 
 namespace wfpk {
@@ -35,6 +36,76 @@ class SingleLayerFilterEnum;
 class FilterEnum;
 class EventMonitor;
 
+class EventMonitor
+{
+public:
+    static uint64_t context;
+
+public:
+    EventMonitor(HANDLE engineHandle, const GUID& sessionKey)
+    : _engineHandle{engineHandle}
+    , _eventSubscriptionHandle{}
+    , _sessionKey{sessionKey}
+    {
+    }
+
+    template <typename FuncT>
+    void start(FuncT callbackFunc)
+    {
+        HANDLE eventHandle{};
+        FWPM_FILTER_CONDITION condition{};
+        condition.fieldKey = FWPM_CONDITION_IP_PROTOCOL;
+        condition.matchType = FWP_MATCH_EQUAL;
+        condition.conditionValue.type = FWP_UINT8;
+        condition.conditionValue.uint8 = 6;
+        FWPM_NET_EVENT_ENUM_TEMPLATE eventEnumTemplate{};
+        // Set startTime to current time ('now')
+        GetSystemTimeAsFileTime(&eventEnumTemplate.startTime);
+        // Maximum possible date for endTime - since we don't want an end date
+        eventEnumTemplate.endTime.dwLowDateTime = eventEnumTemplate.startTime.dwHighDateTime + 10000;
+        eventEnumTemplate.endTime.dwHighDateTime = eventEnumTemplate.startTime.dwHighDateTime + 1000;
+        eventEnumTemplate.filterCondition = &condition;
+        eventEnumTemplate.numFilterConditions = 0;
+
+        FWPM_NET_EVENT_SUBSCRIPTION subscription{};
+        subscription.enumTemplate = &eventEnumTemplate;
+        subscription.sessionKey = _sessionKey ;
+        subscription.flags = {};
+
+        uint64_t *ptr = new uint64_t(0);
+
+        DWORD result = FwpmNetEventSubscribe(
+            _engineHandle,
+            &subscription,
+            callbackFunc,
+            &EventMonitor::context, // Context for the callback; can be NULL
+            &_eventSubscriptionHandle // Receives the subscription handle
+        );
+
+        if(result != ERROR_SUCCESS)
+            throw WfpError{"FwpmNetEventSubscribe failed, code: " + result};
+    }
+
+    ~EventMonitor()
+    {
+        if(!_engineHandle || !_eventSubscriptionHandle)
+            return;
+
+        DWORD result{ERROR_SUCCESS};
+        result = FwpmNetEventUnsubscribe(_engineHandle, _eventSubscriptionHandle);
+        if(result != ERROR_SUCCESS)
+        {
+            std::cerr << "FwpmNetEventUnsubscribe failed: " << result;
+        }
+    }
+
+private:
+    HANDLE _engineHandle{};
+    HANDLE _eventSubscriptionHandle{};
+    GUID _sessionKey;
+
+};
+
 // RAII wrapper around FWPEngine
 class Engine
 {
@@ -62,9 +133,10 @@ public:
     }
 
     template <typename CallbackFuncT>
-    void monitorEvents(CallbackFuncT callbackFunc) const
+    void monitorEvents(CallbackFuncT callbackFunc)
     {
-        EventMonitor{_handle, _session.sessionKey}.start(callbackFunc);
+        _pMonitor = std::make_unique<EventMonitor>(_handle, _session.sessionKey);
+        _pMonitor->start(callbackFunc);
     }
 
     // Delete a filter by Id
@@ -76,6 +148,7 @@ public:
 private:
     HANDLE _handle{};
     FWPM_SESSION0 _session{};
+    std::unique_ptr<EventMonitor> _pMonitor;
 };
 
 // RAII Wrapper around FWPM_FILTER enumeration classes
@@ -150,75 +223,5 @@ public:
 private:
     HANDLE _engineHandle{};
     std::vector<GUID> _layers;
-};
-
-class EventMonitor
-{
-public:
-    static uint64_t context;
-
-public:
-    EventMonitor(HANDLE engineHandle, const GUID& sessionKey)
-    : _engineHandle{engineHandle}
-    , _eventSubscriptionHandle{}
-    , _sessionKey{sessionKey}
-    {
-    }
-
-    template <typename FuncT>
-    void start(FuncT callbackFunc)
-    {
-        HANDLE eventHandle{};
-        FWPM_FILTER_CONDITION condition{};
-        condition.fieldKey = FWPM_CONDITION_IP_REMOTE_PORT;
-        condition.matchType = FWP_MATCH_EQUAL;
-        condition.conditionValue.type = FWP_UINT16;
-        condition.conditionValue.uint16 = 53;
-        FWPM_NET_EVENT_ENUM_TEMPLATE eventEnumTemplate{};
-        // Set startTime to current time ('now')
-        //GetSystemTimeAsFileTime(&eventEnumTemplate.startTime);
-        // Maximum possible date for endTime - since we don't want an end date
-        //eventEnumTemplate.endTime.dwLowDateTime = 0xFFFFFFFF;
-        //eventEnumTemplate.endTime.dwHighDateTime = 0x7FFFFFFF;
-        //eventEnumTemplate.filterCondition = &condition;
-        //eventEnumTemplate.numFilterConditions = 0;
-
-        FWPM_NET_EVENT_SUBSCRIPTION subscription{};
-        subscription.enumTemplate = NULL; //&eventEnumTemplate;
-        subscription.sessionKey = _sessionKey ;
-        subscription.flags = {};
-
-        uint64_t *ptr = new uint64_t(0);
-
-        DWORD result = FwpmNetEventSubscribe(
-            _engineHandle,
-            NULL,
-            callbackFunc,
-            &EventMonitor::context, // Context for the callback; can be NULL
-            &_eventSubscriptionHandle // Receives the subscription handle
-        );
-
-        if(result != ERROR_SUCCESS)
-            throw WfpError{"FwpmNetEventSubscribe failed, code: " + result};
-    }
-
-    ~EventMonitor()
-    {
-        if(!_engineHandle || !_eventSubscriptionHandle)
-            return;
-
-        DWORD result{ERROR_SUCCESS};
-        result = FwpmNetEventUnsubscribe(_engineHandle, _eventSubscriptionHandle);
-        if(result != ERROR_SUCCESS)
-        {
-            std::cerr << "FwpmNetEventUnsubscribe failed: " << result;
-        }
-    }
-
-private:
-    HANDLE _engineHandle{};
-    HANDLE _eventSubscriptionHandle{};
-    GUID _sessionKey;
-
 };
 }

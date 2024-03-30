@@ -88,7 +88,9 @@ void CALLBACK foo(void *context, const FWPM_NET_EVENT *event)
 
 void WfpKiller::monitor() const
 {
-    _engine.monitorEvents(foo);
+    _engine.monitorEvents([](auto *context, const auto *event) {
+        std::cout << "Some event occured" << std::endl;
+    });
 
 
 

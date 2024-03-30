@@ -59,6 +59,18 @@ namespace
         WFP_NAME(FWP_ACTION_CALLOUT_UNKNOWN, "callout-unknown")
     };
 
+    // Hard-coding values from IPPROTO_* section of https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
+    // include of winsock2.h causes errors i'm not in the mood to debug
+    const std::unordered_map<UINT32, WfpName> kIpProtoTypeMap {
+        WFP_NAME(1, "icmp"),
+        WFP_NAME(2, "igmp"),
+        WFP_NAME(3, "bluetooth"),
+        WFP_NAME(6, "tcp"),
+        WFP_NAME(17, "udp"),
+        WFP_NAME(58, "ipv6 icmp"),
+        WFP_NAME(113, "reliable multicast")
+    };
+
     // Event types, see full list: https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ne-fwpmtypes-fwpm_net_event_type
     const std::unordered_map<FWPM_NET_EVENT_TYPE, WfpName> kEventTypeMap {
         WFP_NAME(FWPM_NET_EVENT_TYPE_CLASSIFY_DROP, "drop"),
@@ -84,7 +96,6 @@ namespace
 
 WfpName WfpNameMapper::getName(const GUID &guidName)
 {
-
     return nameLookup(kGuidWfpNameMap, guidName, "UNKNOWN-GUID");
 }
 
@@ -103,6 +114,12 @@ template <>
 WfpName WfpNameMapper::getName<WFPK_ACTION_TYPE>(UINT32 value)
 {
     return nameLookup(kActionTypeMap, value, "UNKNOWN-ACTIONTYPE");
+}
+
+template <>
+WfpName WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(UINT32 value)
+{
+    return nameLookup(kIpProtoTypeMap, value, "UNKNOWN-IPPROTOTYPE");
 }
 
 #undef WFP_NAME

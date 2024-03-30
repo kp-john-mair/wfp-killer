@@ -74,15 +74,6 @@ void WfpKiller::monitor()
 {
     _engine.monitorEvents([](void *context, const FWPM_NET_EVENT *event) {
         std::cout << *event << "\n";
-        switch(event->type)
-        {
-        case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
-            std::cout << "drop event\n";
-            break;
-        case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
-            std::cout << "allow event\n";
-            break;
-        }
     });
 
     std::cin.get();

@@ -6,6 +6,7 @@
 
 #include "wfp_ostream_helpers.h"
 #include "wfp_name_mapper.h"
+#include "wfp_objects.h"
 #include <fwpmu.h>
 #include <format>
 
@@ -41,15 +42,28 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
 {
     const FWPM_NET_EVENT_HEADER &header = event.header;
 
-    if(header.ipProtocol == AF_INET6)
+    if(!(header.ipProtocol == IPPROTO_ICMP || header.ipProtocol == IPPROTO_TCP || header.ipProtocol == IPPROTO_UDP))
     {
-        os << "IPv6 not yet supported";
+        os << std::format("Only some protocols are supported! Got unsupported procotol number: {}\n", header.ipProtocol);
         return os;
     }
 
     std::string eventType = WfpNameMapper::getName(event.type).friendlyName;
+    UINT64 filterId{};
 
-    os << std::format("{} {} {}:{} -> {}:{}", eventType, blobToString(header.appId), ipToString(ntohl(header.localAddrV4)), header.localPort, ipToString(ntohl(header.remoteAddrV4)), header.remotePort);
+    switch(event.type)
+    {
+    case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
+        filterId = event.classifyDrop->filterId;
+        break;
+    case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
+        filterId = event.classifyAllow->filterId;
+        break;
+    }
+
+    std::string protocol = WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(static_cast<UINT32>(header.ipProtocol)).friendlyName;
+
+    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, blobToString(header.appId), ipToString(ntohl(header.localAddrV4)), header.localPort, ipToString(ntohl(header.remoteAddrV4)), header.remotePort);
 
     return os;
 }

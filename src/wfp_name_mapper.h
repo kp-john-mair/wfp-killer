@@ -19,7 +19,9 @@ namespace wfpk {
 // 'values' (which are also just plain ints, like FWP_ACTION_BLOCK )
 enum WFPK_TYPES
 {
-    WFPK_ACTION_TYPE
+    WFPK_ACTION_TYPE,
+    // Maps to the IPPROTO_* fields found here: https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
+    WFPK_IPPROTO_TYPE
 };
 
 // Maps a WFP name to something human readable
@@ -34,8 +36,11 @@ public:
     template <WFPK_TYPES type>
     static WfpName getName(UINT32 value);
 
-    // Full specialization of above
+    // Full specializations of above
     template <>
     static WfpName getName<WFPK_ACTION_TYPE>(UINT32 value);
+
+    template <>
+    static WfpName getName<WFPK_IPPROTO_TYPE>(UINT32 value);
 };
 }

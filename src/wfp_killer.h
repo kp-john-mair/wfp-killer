@@ -4,7 +4,6 @@
 
 namespace wfpk {
 
-void CALLBACK foo(void *context, const FWPM_NET_EVENT3 *event);
 // Core application class
 class WfpKiller
 {

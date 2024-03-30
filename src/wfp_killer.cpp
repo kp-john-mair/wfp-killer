@@ -70,25 +70,6 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
     std::cout << std::format("Deleted {} filters.\n", deleteCount);
 }
 
-void CALLBACK foo(void *context, const FWPM_NET_EVENT *event)
-{
-
-/*
-        uint64_t *ptr = reinterpret_cast<uint64_t*>(context);
-        *ptr = 100;
-        std::cout << "Some event occured" << std::endl;
-        switch(event->type)
-        {
-        case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
-            std::cout << "Drop event" << std::endl;;
-            break;
-        case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
-            std::cout << "Allow event" << std::endl;;
-            break;
-        }
-        */
-}
-
 void WfpKiller::monitor()
 {
     _engine.monitorEvents([](void *context, const FWPM_NET_EVENT *event) {

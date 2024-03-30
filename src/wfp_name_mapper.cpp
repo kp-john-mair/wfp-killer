@@ -59,6 +59,12 @@ namespace
         WFP_NAME(FWP_ACTION_CALLOUT_UNKNOWN, "callout-unknown")
     };
 
+    // Event types, see full list: https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ne-fwpmtypes-fwpm_net_event_type
+    const std::unordered_map<FWPM_NET_EVENT_TYPE, WfpName> kEventTypeMap {
+        WFP_NAME(FWPM_NET_EVENT_TYPE_CLASSIFY_DROP, "drop"),
+        WFP_NAME(FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW, "allow"),
+    };
+
     // Generic lookup function with fallback
     template <typename MapT, typename KeyT>
     WfpName nameLookup(const MapT &map, const KeyT &key, const std::string &unknownFallback)
@@ -87,6 +93,11 @@ WfpName WfpNameMapper::getName(const FWP_MATCH_TYPE &matchType)
 
     return nameLookup(kMatchTypeMap, matchType, "UNKNOWN-MATCHTYPE");
 }
+
+ WfpName WfpNameMapper::getName(const FWPM_NET_EVENT_TYPE &eventType)
+ {
+     return nameLookup(kEventTypeMap, eventType, "UNKNOWN-EVENTTYPE");
+ }
 
 template <>
 WfpName WfpNameMapper::getName<WFPK_ACTION_TYPE>(UINT32 value)

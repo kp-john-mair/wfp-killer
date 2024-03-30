@@ -47,7 +47,9 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
         return os;
     }
 
-    os << std::format("{} {}:{} -> {}:{}", blobToString(header.appId), ipToString(ntohl(header.localAddrV4)), header.localPort, ipToString(ntohl(header.remoteAddrV4)), header.remotePort);
+    std::string eventType = WfpNameMapper::getName(event.type).friendlyName;
+
+    os << std::format("{} {} {}:{} -> {}:{}", eventType, blobToString(header.appId), ipToString(ntohl(header.localAddrV4)), header.localPort, ipToString(ntohl(header.remoteAddrV4)), header.remotePort);
 
     return os;
 }
@@ -134,14 +136,6 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     case FWP_V4_ADDR_MASK:
     {
         UINT32 ipAddress = condition.conditionValue.v4AddrMask->addr;
-
-        auto ipToString = [&](UINT32 ipAddress)
-        {
-            char str[INET_ADDRSTRLEN]{};
-            InetNtopA(AF_INET, &ipAddress, str, INET_ADDRSTRLEN);
-
-            return std::string{str};
-        };
 
         os << ipToString(ntohl(ipAddress));
         os << " / ";

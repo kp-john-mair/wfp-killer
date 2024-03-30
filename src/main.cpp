@@ -5,11 +5,25 @@
 #include "wfp_killer.h"
 #include "wfp_objects.h"
 #include "cxxopts.h"
+#include <stdlib.h>
 
 // Instruct the compiler to link these libs for us
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "fwpuclnt.lib")
 #pragma comment(lib, "Shell32.lib")
+#pragma comment(lib, "Rpcrt4.lib")
+
+
+BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
+{
+    switch (ctrlType) {
+    case CTRL_C_EVENT:
+        std::cout << "Ctrl+C detected, exiting...\n";
+        exit(0); // Use exit() to terminate the program or a specific return code as needed
+        return TRUE;
+    }
+    return FALSE; // If not handled, return FALSE
+}
 
 int main(int argc, char** argv)
 {
@@ -19,12 +33,20 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    if(!SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE))
+    {
+        // If the handler cannot be installed, exit or handle the error
+        std::cerr <<  "Error: Unable to install Ctrl+C handler\n";
+        return 1;
+    }
+
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
 
     options.allow_unrecognised_options();
     options.add_options()
         ("h,help", "Display this help message.")
         ("l,list", "List all PIA filters.")
+        ("m,monitor", "Monitor net events.")
         ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all')", cxxopts::value<std::vector<std::string>>());
 
     wfpk::WfpKiller wfpKiller;
@@ -64,6 +86,10 @@ int main(int argc, char** argv)
             wfpKiller.deleteFilters(filterIds);
 
             return 0;
+        }
+        else if(result.count("monitor"))
+        {
+            wfpKiller.monitor();
         }
         else
         {

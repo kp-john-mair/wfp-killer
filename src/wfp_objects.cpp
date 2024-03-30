@@ -7,17 +7,27 @@
 #include <string>
 #include <optional>
 #include <memory>
+#include <guiddef.h>
+#include <Rpc.h>
+
 
 namespace wfpk {
+
+uint64_t EventMonitor::context = 0;
 
 Engine::Engine()
 : _handle{}
 {
 
-    DWORD result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, NULL, &_handle);
+    // Make our session dynamic - any applied filters will be deleted
+    // when the engine is cleaned up
+    _session.flags = FWPM_SESSION_FLAG_DYNAMIC;
+    ::UuidCreate(&_session.sessionKey);
+
+    DWORD result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, &_session, &_handle);
     if(result != ERROR_SUCCESS)
     {
-        throw WfpError{"FwpmEngineOpen failed: " + result};
+        throw WfpError{"FwpmEngineOpen failed, code: " + result};
     }
 }
 
@@ -33,7 +43,7 @@ Engine::~Engine()
     if(result != ERROR_SUCCESS)
     {
         // Cannot throw in a destructor
-        std::cerr << "FwpmEngineClose failed: " << result;
+        std::cerr << "FwpmEngineClose failed, code: " << result;
     }
 }
 

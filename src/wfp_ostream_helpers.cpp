@@ -21,6 +21,14 @@ namespace
         return std::string{str};
     }
 
+    std::string ipToString(const FWP_BYTE_ARRAY16 &ipAddress)
+    {
+        char str[INET6_ADDRSTRLEN]{};
+        InetNtopA(AF_INET6, &ipAddress.byteArray16, str, INET6_ADDRSTRLEN);
+
+        return str;
+    }
+
     std::string blobToString(const FWP_BYTE_BLOB &blob)
     {
         UINT8* data = blob.data;
@@ -61,9 +69,23 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
         break;
     }
 
+    std::string localAddress;
+    std::string remoteAddress;
+    switch(header.ipVersion)
+    {
+    case FWP_IP_VERSION_V4:
+        localAddress = ipToString(ntohl(header.localAddrV4));
+        remoteAddress = ipToString(ntohl(header.remoteAddrV4));
+    break;
+    case FWP_IP_VERSION_V6:
+        localAddress = ipToString(header.localAddrV6);
+        remoteAddress = ipToString(header.remoteAddrV6);
+    break;
+    }
+
     std::string protocol = WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(static_cast<UINT32>(header.ipProtocol)).friendlyName;
 
-    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, blobToString(header.appId), ipToString(ntohl(header.localAddrV4)), header.localPort, ipToString(ntohl(header.remoteAddrV4)), header.remotePort);
+    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, blobToString(header.appId), localAddress, header.localPort, remoteAddress, header.remotePort);
 
     return os;
 }
@@ -120,17 +142,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
         break;
     case FWP_BYTE_BLOB_TYPE:
     {
-        UINT8* data = condition.conditionValue.byteBlob->data;
-
-        size_t numChars = condition.conditionValue.byteBlob->size / sizeof(wchar_t) - 1;
-
-        std::string str;
-        std::wstring wstr(reinterpret_cast<const wchar_t*>(data), numChars);
-
-        // hack to convert wide strings to strings
-        std::transform(wstr.begin(), wstr.end(), std::back_inserter(str), [] (wchar_t c) {
-            return static_cast<char>(c);
-        });
+        std::string str = blobToString(*condition.conditionValue.byteBlob);
 
         auto pos = str.find_last_of('\\');
 

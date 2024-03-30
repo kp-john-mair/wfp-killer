@@ -31,6 +31,7 @@ public:
     static WfpName getName(const GUID& guidName);
     static WfpName getName(const FWP_MATCH_TYPE &matchType);
     static WfpName getName(const FWPM_NET_EVENT_TYPE &eventType);
+    static WfpName getName(const FWP_IP_VERSION &ipVersion);
 
     // Primary template (not implemented)
     template <WFPK_TYPES type>

@@ -50,6 +50,13 @@ namespace
         WFP_NAME(FWP_MATCH_LESS_OR_EQUAL, "less or equal")
     };
 
+    const std::unordered_map<FWP_IP_VERSION, WfpName> kIpVersionMap {
+        WFP_NAME(FWP_IP_VERSION_V4, "Ipv4"),
+        WFP_NAME(FWP_IP_VERSION_V6, "Ipv6"),
+        WFP_NAME(FWP_IP_VERSION_NONE, "Invalid (No Ip version)"),
+        WFP_NAME(FWP_IP_VERSION_MAX, "Invalid (Max Ip Version)"),
+    };
+
     // Action types, see full list: https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_action0
     const std::unordered_map<UINT32, WfpName> kActionTypeMap {
         WFP_NAME(FWP_ACTION_BLOCK, "block"),
@@ -103,6 +110,11 @@ WfpName WfpNameMapper::getName(const FWP_MATCH_TYPE &matchType)
 {
 
     return nameLookup(kMatchTypeMap, matchType, "UNKNOWN-MATCHTYPE");
+}
+
+static WfpName getName(const FWP_IP_VERSION &ipVersion)
+{
+    return nameLookup(kIpVersionMap, ipVersion, "UNKNOWN-IPVERSION");
 }
 
  WfpName WfpNameMapper::getName(const FWPM_NET_EVENT_TYPE &eventType)

@@ -3,12 +3,13 @@
 
 #include <iomanip>
 #include <algorithm>
+#include <format>
+#include <filesystem>
 
 #include "wfp_ostream_helpers.h"
 #include "wfp_name_mapper.h"
 #include "wfp_objects.h"
 #include <fwpmu.h>
-#include <format>
 #include "utils.h"
 
 namespace wfpk {
@@ -51,8 +52,10 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
     }
 
     std::string protocol = WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(static_cast<UINT32>(header.ipProtocol)).friendlyName;
+    // Clip it to just the filename, not the full path
+    std::string fileName = std::filesystem::path{blobToString(header.appId)}.filename().string();
 
-    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, blobToString(header.appId), localAddress, header.localPort, remoteAddress, header.remotePort);
+    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, fileName, localAddress, header.localPort, remoteAddress, header.remotePort);
 
     return os;
 }
@@ -109,20 +112,8 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
         break;
     case FWP_BYTE_BLOB_TYPE:
     {
-        std::string str = blobToString(*condition.conditionValue.byteBlob);
-
-        auto pos = str.find_last_of('\\');
-
-        if(pos != std::string::npos)
-        {
-            std::string filename = str.substr(pos + 1);
-            os << filename;
-
-        }
-        else
-        {
-           os << str;
-        }
+        std::filesystem::path path = blobToString(*condition.conditionValue.byteBlob);
+        os << path.filename().string();
 
         break;
     }

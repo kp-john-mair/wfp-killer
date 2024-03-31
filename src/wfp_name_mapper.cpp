@@ -51,7 +51,7 @@ namespace
         WFP_NAME(FWP_ACTION_PERMIT, "permit"),
         WFP_NAME(FWP_ACTION_CALLOUT_TERMINATING, "callout"),
         WFP_NAME(FWP_ACTION_CALLOUT_INSPECTION, "callout_inspection"),
-        WFP_NAME(FWP_ACTION_CALLOUT_UNKNOWN, "callout-unknown")
+        WFP_NAME(FWP_ACTION_CALLOUT_UNKNOWN, "callout_unknown")
     };
 
     // Hard-coding values from IPPROTO_* section of https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket

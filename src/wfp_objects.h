@@ -145,7 +145,7 @@ public:
     // Delete a filter by Id
     DWORD deleteFilterById(FilterId filerId) const;
 
-    auto handle() -> const HANDLE& { return _handle; }
+    auto handle() -> HANDLE { return _handle; }
     operator HANDLE() { return handle(); }
 
 private:

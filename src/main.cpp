@@ -19,10 +19,10 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
     switch (ctrlType) {
     case CTRL_C_EVENT:
         std::cout << "Ctrl+C detected, exiting...\n";
-        exit(0); // Use exit() to terminate the program or a specific return code as needed
+        exit(0);
         return TRUE;
     }
-    return FALSE; // If not handled, return FALSE
+    return FALSE;
 }
 
 int main(int argc, char** argv)
@@ -42,17 +42,17 @@ int main(int argc, char** argv)
 
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
 
-    options.allow_unrecognised_options();
-    options.add_options()
-        ("h,help", "Display this help message.")
-        ("l,list", "List all PIA filters.")
-        ("m,monitor", "Monitor net events.")
-        ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all')", cxxopts::value<std::vector<std::string>>());
-
-    wfpk::WfpKiller wfpKiller;
-
     try
     {
+        options.allow_unrecognised_options();
+        options.add_options()
+            ("h,help", "Display this help message.")
+            ("l,list", "List all PIA filters.")
+            ("m,monitor", "Monitor WFP events.")
+            ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>());
+
+        wfpk::WfpKiller wfpKiller;
+
         auto result = options.parse(argc, argv);
 
         if(result.count("help"))
@@ -73,6 +73,7 @@ int main(int argc, char** argv)
             bool shouldDeleteAllFilters = std::ranges::find(filterIdStrs, "all") != filterIdStrs.end();
 
             std::vector<wfpk::FilterId> filterIds;
+            filterIds.reserve(result.count("delete"));
 
             // Empty filterIds vector means we delete all filters
             // If we shouldn't delete all - then we fill it with ids

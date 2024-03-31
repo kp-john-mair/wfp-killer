@@ -51,7 +51,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
     break;
     }
 
-    std::string protocol = WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(static_cast<UINT32>(header.ipProtocol)).friendlyName;
+    std::string protocol = WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(header.ipProtocol).friendlyName;
     // Clip it to just the filename, not the full path
     std::string fileName = std::filesystem::path{blobToString(header.appId)}.filename().string();
 

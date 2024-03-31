@@ -111,13 +111,13 @@ static WfpName getName(const FWP_IP_VERSION &ipVersion)
  }
 
 template <>
-WfpName WfpNameMapper::getName<WFPK_ACTION_TYPE>(UINT32 value)
+WfpName WfpNameMapper::getName<WFPK_ACTION_TYPE, UINT32>(UINT32 value)
 {
     return nameLookup(kActionTypeMap, value, "UNKNOWN-ACTIONTYPE");
 }
 
 template <>
-WfpName WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(UINT32 value)
+WfpName WfpNameMapper::getName<WFPK_IPPROTO_TYPE, UINT8>(UINT8 value)
 {
     return nameLookup(kIpProtoTypeMap, value, "UNKNOWN-IPPROTOTYPE");
 }

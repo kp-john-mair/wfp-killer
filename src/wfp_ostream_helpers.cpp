@@ -45,8 +45,8 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
         remoteAddress = ipToString(ntohl(header.remoteAddrV4));
     break;
     case FWP_IP_VERSION_V6:
-        localAddress = ipToString(header.localAddrV6);
-        remoteAddress = ipToString(header.remoteAddrV6);
+        localAddress = ipToString(header.localAddrV6.byteArray16);
+        remoteAddress = ipToString(header.remoteAddrV6.byteArray16);
     break;
     }
 
@@ -138,10 +138,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     }
     case FWP_V6_ADDR_MASK:
     {
-        char str[INET6_ADDRSTRLEN]{};
-        InetNtopA(AF_INET6, &condition.conditionValue.v6AddrMask->addr, str, INET6_ADDRSTRLEN);
-
-        os << str;
+        os << ipToString(condition.conditionValue.v6AddrMask->addr);
         os << " / ";
         os <<  static_cast<UINT32>(condition.conditionValue.v6AddrMask->prefixLength);
 

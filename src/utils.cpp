@@ -13,10 +13,10 @@ std::string ipToString(UINT32 ipAddress)
     return std::string{str};
 }
 
-std::string ipToString(const FWP_BYTE_ARRAY16 &ipAddress)
+std::string ipToString(const UINT8 (&ipAddress)[16])
 {
     char str[INET6_ADDRSTRLEN]{};
-    InetNtopA(AF_INET6, &ipAddress.byteArray16, str, INET6_ADDRSTRLEN);
+    InetNtopA(AF_INET6, ipAddress, str, INET6_ADDRSTRLEN);
 
     return str;
 }

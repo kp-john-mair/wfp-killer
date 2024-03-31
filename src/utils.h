@@ -27,7 +27,8 @@ namespace std
 
 namespace wfpk {
 std::string ipToString(UINT32 ipAddress);
-std::string ipToString(const FWP_BYTE_ARRAY16 &ipAddress);
+// Ensure we get an array of UINT8[16] - prevent decay to pointer
+std::string ipToString(const UINT8 (&ipAddress)[16]);
 std::string blobToString(const FWP_BYTE_BLOB &blob);
 }
 

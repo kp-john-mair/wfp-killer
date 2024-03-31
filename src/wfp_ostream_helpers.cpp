@@ -47,11 +47,11 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
     case FWP_IP_VERSION_V4:
         localAddress = ipToString(ntohl(header.localAddrV4));
         remoteAddress = ipToString(ntohl(header.remoteAddrV4));
-    break;
+        break;
     case FWP_IP_VERSION_V6:
         localAddress = ipToString(header.localAddrV6.byteArray16);
         remoteAddress = ipToString(header.remoteAddrV6.byteArray16);
-    break;
+        break;
     }
 
     std::string protocol = WfpNameMapper::getName<WFPK_IPPROTO_TYPE>(header.ipProtocol).friendlyName;

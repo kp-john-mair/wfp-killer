@@ -15,13 +15,7 @@ namespace wfpk {
 Engine::Engine()
 : _handle{}
 {
-
-    // Make our session dynamic - any applied filters will be deleted
-    // when the engine is cleaned up
-    _session.flags = FWPM_SESSION_FLAG_DYNAMIC;
-    ::UuidCreate(&_session.sessionKey);
-
-    DWORD result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, &_session, &_handle);
+    DWORD result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, NULL, &_handle);
     if(result != ERROR_SUCCESS)
     {
         throw WfpError{"FwpmEngineOpen failed, code: " + result};

@@ -12,7 +12,8 @@
 #include "utils.h"
 
 namespace wfpk {
-    using FilterId = UINT64;
+// Convenient alias for a Filter ID
+using FilterId = UINT64;
 
 // PIA-specific data
 inline constexpr GUID PIA_PROVIDER_KEY = { 0x8de3850, 0xa416, 0x4c47, { 0xb3, 0xad, 0x65, 0x7c, 0x5e, 0xf1, 0x40, 0xfb } };
@@ -24,6 +25,7 @@ class WfpError : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+// Generic deleter for WFP objects
 struct WfpDeleter
 {
     template <typename WfpPtr>
@@ -36,15 +38,14 @@ struct WfpDeleter
 
 class SingleLayerFilterEnum;
 class FilterEnum;
-class EventMonitor;
 
+// Monitor live WFP events
 class EventMonitor
 {
 public:
-    EventMonitor(HANDLE engineHandle, const GUID& sessionKey)
+    EventMonitor(HANDLE engineHandle)
     : _engineHandle{engineHandle}
     , _eventSubscriptionHandle{}
-    , _sessionKey{sessionKey}
     {
     }
 
@@ -52,32 +53,27 @@ public:
         requires std::invocable<FuncT, void*, const FWPM_NET_EVENT*>
     void start(FuncT callbackFunc)
     {
-        HANDLE eventHandle{};
-        FWPM_FILTER_CONDITION condition{};
-        condition.fieldKey = FWPM_CONDITION_IP_PROTOCOL;
-        condition.matchType = FWP_MATCH_EQUAL;
-        condition.conditionValue.type = FWP_UINT8;
-        condition.conditionValue.uint8 = 6;
+        // Template that determines the events we're interested in
         FWPM_NET_EVENT_ENUM_TEMPLATE eventEnumTemplate{};
-        // Set startTime to current time ('now')
+        // Set startTime for our event gathering to current time ('now')
         GetSystemTimeAsFileTime(&eventEnumTemplate.startTime);
         // Maximum possible date for endTime - since we don't want an end date
         eventEnumTemplate.endTime.dwLowDateTime = eventEnumTemplate.startTime.dwHighDateTime + 10000;
         eventEnumTemplate.endTime.dwHighDateTime = eventEnumTemplate.startTime.dwHighDateTime + 1000;
-        eventEnumTemplate.filterCondition = &condition;
+        // No conditions for our template - we want everything.
         eventEnumTemplate.numFilterConditions = 0;
 
+        // Stores information used to subscribe to notifications about a
+        // network event. Just a light wrapper around the template above.
         FWPM_NET_EVENT_SUBSCRIPTION subscription{};
         subscription.enumTemplate = &eventEnumTemplate;
-        subscription.sessionKey = _sessionKey ;
-        subscription.flags = {};
 
         DWORD result = FwpmNetEventSubscribe(
             _engineHandle,
             &subscription,
             callbackFunc,
             NULL, // Context for the callback; can be NULL
-            &_eventSubscriptionHandle // Receives the subscription handle
+            &_eventSubscriptionHandle
         );
 
         if(result != ERROR_SUCCESS)
@@ -100,11 +96,10 @@ public:
 private:
     HANDLE _engineHandle{};
     HANDLE _eventSubscriptionHandle{};
-    GUID _sessionKey;
-
 };
 
-// RAII wrapper around FWPEngine
+// RAII wrapper around FWPEngine - also a singleton that can be
+// accessed via Engine::instance()
 class Engine : public Singleton<Engine>
 {
 public:
@@ -116,7 +111,7 @@ public:
     ~Engine();
 
 public:
-    // Returns an owning pointer to a FWPM_FILTER
+    // Returns an owning pointer to a FWPM_FILTER.
     // Caller is responsible for the life-time of this object
     FWPM_FILTER* getFilterById(UINT64 filterId) const
     {
@@ -146,7 +141,7 @@ public:
         requires std::invocable<CallbackFuncT, void*, const FWPM_NET_EVENT*>
     void monitorEvents(CallbackFuncT callbackFunc)
     {
-        _pMonitor = std::make_unique<EventMonitor>(_handle, _session.sessionKey);
+        _pMonitor = std::make_unique<EventMonitor>(_handle);
         _pMonitor->start(callbackFunc);
     }
 

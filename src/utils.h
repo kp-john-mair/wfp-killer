@@ -27,6 +27,7 @@ namespace std
 }
 
 namespace wfpk {
+// CRTP singleton mixin
 template<class Derived>
 class Singleton
 {
@@ -41,9 +42,12 @@ private:
 template<class Derived>
 Singleton<Derived>* Singleton<Derived>::_instance = nullptr;
 
+// Helpers to represent Ip addresses to strings
+// Ipv4
 std::string ipToString(UINT32 ipAddress);
-// Ensure we get an array of UINT8[16] - prevent decay to pointer
+// Ipv6 - Ensure we get an array of UINT8[16] - prevent decay to pointer
 std::string ipToString(const UINT8 (&ipAddress)[16]);
+// blobs here represent appIds
 std::string blobToString(const FWP_BYTE_BLOB &blob);
 }
 

@@ -50,7 +50,8 @@ public:
     {
     }
 
-    template <std::invocable<void*, const FWPM_NET_EVENT*> FuncT>
+    template <typename FuncT>
+        requires std::invocable<FuncT, void*, const FWPM_NET_EVENT*>
     void start(FuncT callbackFunc)
     {
         HANDLE eventHandle{};
@@ -119,6 +120,7 @@ public:
 public:
     // Iterate over all filters for all given layers
     template <typename IterFuncT>
+        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
     void enumerateFiltersForLayers(const std::vector<GUID> &layerKeys, IterFuncT func) const
     {
         FilterEnum{layerKeys, _handle}.forEach(func);
@@ -126,12 +128,14 @@ public:
 
     // Iterate over filters for just one layer
     template <typename IterFuncT>
+        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
     void enumerateFiltersForLayer(const GUID& layerKey, IterFuncT func) const
     {
         SingleLayerFilterEnum{layerKey, _handle}.forEach(func);
     }
 
-    template <std::invocable<void*, const FWPM_NET_EVENT*> CallbackFuncT>
+    template <typename CallbackFuncT>
+        requires std::invocable<CallbackFuncT, void*, const FWPM_NET_EVENT*>
     void monitorEvents(CallbackFuncT callbackFunc)
     {
         _pMonitor = std::make_unique<EventMonitor>(_handle, _session.sessionKey);
@@ -182,6 +186,7 @@ private:
 
 public:
     template <typename IterFuncT>
+        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
     void forEach(IterFuncT func) const
     {
         for(const auto &filter : _pFilters)
@@ -209,6 +214,7 @@ public:
 
 public:
     template <typename IterFuncT>
+        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
     void forEach(IterFuncT func) const
     {
         for(const auto &layer : _layers)

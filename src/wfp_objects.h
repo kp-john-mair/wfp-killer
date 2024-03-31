@@ -9,6 +9,7 @@
 #include <optional>
 #include <fwpmu.h>
 #include <concepts>
+#include "utils.h"
 
 namespace wfpk {
     using FilterId = UINT64;
@@ -39,9 +40,6 @@ class EventMonitor;
 
 class EventMonitor
 {
-public:
-    static uint64_t context;
-
 public:
     EventMonitor(HANDLE engineHandle, const GUID& sessionKey)
     : _engineHandle{engineHandle}
@@ -78,7 +76,7 @@ public:
             _engineHandle,
             &subscription,
             callbackFunc,
-            &EventMonitor::context, // Context for the callback; can be NULL
+            NULL, // Context for the callback; can be NULL
             &_eventSubscriptionHandle // Receives the subscription handle
         );
 
@@ -107,7 +105,7 @@ private:
 };
 
 // RAII wrapper around FWPEngine
-class Engine
+class Engine : public Singleton<Engine>
 {
 public:
     Engine();
@@ -118,6 +116,16 @@ public:
     ~Engine();
 
 public:
+    // Returns an owning pointer to a FWPM_FILTER
+    // Caller is responsible for the life-time of this object
+    FWPM_FILTER* getFilterById(UINT64 filterId) const
+    {
+        FWPM_FILTER *pFilter{nullptr};
+        FwpmFilterGetById(_handle, filterId, &pFilter);
+
+        return pFilter;
+    }
+
     // Iterate over all filters for all given layers
     template <typename IterFuncT>
         requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>

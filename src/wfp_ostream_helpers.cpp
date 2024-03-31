@@ -37,6 +37,9 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
         break;
     }
 
+    // Grab a pointer to the applied filter
+    std::unique_ptr<FWPM_FILTER, WfpDeleter> pFilter{Engine::instance()->getFilterById(filterId)};
+
     std::string localAddress;
     std::string remoteAddress;
     switch(header.ipVersion)
@@ -56,6 +59,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
     std::string fileName = std::filesystem::path{blobToString(header.appId)}.filename().string();
 
     os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, fileName, localAddress, header.localPort, remoteAddress, header.remotePort);
+    os << " - (Filter applied: " << *pFilter << ")";
 
     return os;
 }

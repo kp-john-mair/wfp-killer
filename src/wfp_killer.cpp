@@ -77,8 +77,6 @@ void WfpKiller::monitor()
     });
 
     std::cin.get();
-
-    std::cout << "Value of EventMonitor::context " << EventMonitor::context << std::endl;
 }
 
 bool WfpKiller::deleteSingleFilter(FilterId filterId) const

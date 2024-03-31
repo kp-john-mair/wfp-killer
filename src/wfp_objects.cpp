@@ -10,10 +10,7 @@
 #include <guiddef.h>
 #include <Rpc.h>
 
-
 namespace wfpk {
-
-uint64_t EventMonitor::context = 0;
 
 Engine::Engine()
 : _handle{}

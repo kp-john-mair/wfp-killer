@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <fwpmu.h>
+#include <concepts>
 
 namespace wfpk {
     using FilterId = UINT64;
@@ -49,7 +50,7 @@ public:
     {
     }
 
-    template <typename FuncT>
+    template <std::invocable<void*, const FWPM_NET_EVENT*> FuncT>
     void start(FuncT callbackFunc)
     {
         HANDLE eventHandle{};
@@ -71,8 +72,6 @@ public:
         subscription.enumTemplate = &eventEnumTemplate;
         subscription.sessionKey = _sessionKey ;
         subscription.flags = {};
-
-        uint64_t *ptr = new uint64_t(0);
 
         DWORD result = FwpmNetEventSubscribe(
             _engineHandle,
@@ -132,7 +131,7 @@ public:
         SingleLayerFilterEnum{layerKey, _handle}.forEach(func);
     }
 
-    template <typename CallbackFuncT>
+    template <std::invocable<void*, const FWPM_NET_EVENT*> CallbackFuncT>
     void monitorEvents(CallbackFuncT callbackFunc)
     {
         _pMonitor = std::make_unique<EventMonitor>(_handle, _session.sessionKey);

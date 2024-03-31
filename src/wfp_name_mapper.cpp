@@ -1,19 +1,7 @@
 #include "wfp_name_mapper.h"
 #include <unordered_map>
 #include <iostream>
-
-namespace std
-{
-    template <>
-    struct hash<GUID>
-    {
-        size_t operator()(const GUID& guid) const
-        {
-            const uint64_t *p = reinterpret_cast<const uint64_t*>(&guid);
-            return hash<uint64_t>{}(p[0]) ^ hash<uint64_t>{}(p[1]);
-        }
-    };
-}
+#include "utils.h"
 
 namespace wfpk {
 namespace

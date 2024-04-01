@@ -26,8 +26,25 @@ std::string blobToString(const FWP_BYTE_BLOB &blob)
     UINT8* data = blob.data;
     size_t numChars = blob.size / sizeof(wchar_t) - 1;
 
-    std::string str;
     std::wstring wstr(reinterpret_cast<const wchar_t*>(data), numChars);
+
+    return wideStringToString(wstr);
+}
+
+std::string guidToString(const GUID& guid) {
+    constexpr size_t strSize = 64;
+
+    wchar_t wszGuid[strSize] = {};
+    StringFromGUID2(guid, wszGuid, strSize);
+    std::wstring result(wszGuid);
+
+    // Convert the std::wstring to a std::string
+    return wideStringToString(result);
+}
+
+std::string wideStringToString(const std::wstring &wstr)
+{
+    std::string str;
 
     // hack to convert wide strings to strings
     std::transform(wstr.begin(), wstr.end(), std::back_inserter(str), [] (wchar_t c) {
@@ -36,4 +53,5 @@ std::string blobToString(const FWP_BYTE_BLOB &blob)
 
     return str;
 }
+
 }

@@ -1,3 +1,5 @@
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include "wfp_name_mapper.h"
 #include <unordered_map>
 #include <iostream>
@@ -38,6 +40,7 @@ namespace
         WFP_NAME(FWP_MATCH_LESS_OR_EQUAL, "less or equal")
     };
 
+    // IP Version types, see full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ne-fwptypes-fwp_ip_version
     const std::unordered_map<FWP_IP_VERSION, WfpName> kIpVersionMap {
         WFP_NAME(FWP_IP_VERSION_V4, "Ipv4"),
         WFP_NAME(FWP_IP_VERSION_V6, "Ipv6"),
@@ -54,16 +57,13 @@ namespace
         WFP_NAME(FWP_ACTION_CALLOUT_UNKNOWN, "callout_unknown")
     };
 
-    // Hard-coding values from IPPROTO_* section of https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
-    // include of winsock2.h causes errors i'm not in the mood to debug
+    // See IPPROTO_* section of https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
     const std::unordered_map<UINT32, WfpName> kIpProtoTypeMap {
-        WFP_NAME(1, "icmp"),
-        WFP_NAME(2, "igmp"),
-        WFP_NAME(3, "bluetooth"),
-        WFP_NAME(6, "tcp"),
-        WFP_NAME(17, "udp"),
-        WFP_NAME(58, "ipv6 icmp"),
-        WFP_NAME(113, "reliable multicast")
+        WFP_NAME(IPPROTO_ICMP, "icmp"),
+        WFP_NAME(IPPROTO_IGMP, "igmp"),
+        WFP_NAME(IPPROTO_TCP, "tcp"),
+        WFP_NAME(IPPROTO_UDP, "udp"),
+        WFP_NAME(IPPROTO_ICMPV6, "ipv6 icmp"),
     };
 
     // Event types, see full list: https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ne-fwpmtypes-fwpm_net_event_type
@@ -84,7 +84,14 @@ namespace
         }
         else
         {
-            return { unknownFallback, unknownFallback };
+            // Show the unknown key in the return value
+            std::string unknownMessage{unknownFallback + ": "};
+            if constexpr(std::is_same_v<std::decay_t<KeyT>, GUID>)
+                unknownMessage += guidToString(key);
+            else
+                unknownMessage += std::to_string(static_cast<uint32_t>(key));
+
+            return { unknownMessage, unknownMessage };
         }
     }
 }

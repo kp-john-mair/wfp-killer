@@ -13,18 +13,15 @@
 #include <assert.h>
 
 // Allow GUID to be used as a key in a hash
-namespace std
+template <>
+struct std::hash<GUID>
 {
-    template <>
-    struct hash<GUID>
+    size_t operator()(const GUID& guid) const
     {
-        size_t operator()(const GUID& guid) const
-        {
-            const uint64_t *p = reinterpret_cast<const uint64_t*>(&guid);
-            return hash<uint64_t>{}(p[0]) ^ hash<uint64_t>{}(p[1]);
-        }
-    };
-}
+        const uint64_t *p = reinterpret_cast<const uint64_t*>(&guid);
+        return std::hash<uint64_t>{}(p[0]) ^ std::hash<uint64_t>{}(p[1]);
+    }
+};
 
 namespace wfpk {
 // CRTP singleton mixin
@@ -36,11 +33,8 @@ public:
     ~Singleton() { _instance = nullptr; }
     static Derived* instance() { return static_cast<Derived*>(_instance); }
 private:
-    static Singleton* _instance;
+    inline static Singleton* _instance = nullptr;
 };
-
-template<class Derived>
-Singleton<Derived>* Singleton<Derived>::_instance = nullptr;
 
 // Helpers to represent Ip addresses to strings
 // Ipv4
@@ -49,5 +43,9 @@ std::string ipToString(UINT32 ipAddress);
 std::string ipToString(const UINT8 (&ipAddress)[16]);
 // blobs here represent appIds
 std::string blobToString(const FWP_BYTE_BLOB &blob);
+// Convert a std::wstring to a std::string
+std::string wideStringToString(const std::wstring &wstr);
+// Convert a GUID to a std::string
+std::string guidToString(const GUID& guid);
 }
 

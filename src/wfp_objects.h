@@ -47,6 +47,7 @@ public:
     : _engineHandle{engineHandle}
     , _eventSubscriptionHandle{}
     {
+        assert(_engineHandle); // pre-condition
     }
 
     template <typename FuncT>
@@ -82,7 +83,7 @@ public:
 
     ~EventMonitor()
     {
-        if(!_engineHandle || !_eventSubscriptionHandle)
+        if(!_eventSubscriptionHandle)
             return;
 
         DWORD result{ERROR_SUCCESS};

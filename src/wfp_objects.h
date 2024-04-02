@@ -154,7 +154,6 @@ public:
 
 private:
     HANDLE _handle{};
-    FWPM_SESSION0 _session{};
     std::unique_ptr<EventMonitor> _pMonitor;
 };
 
@@ -176,9 +175,17 @@ private:
         template <typename PtrT>
         bool operator()(const PtrT &lhs, const PtrT &rhs) const
         {
-            // TODO: uint8 weight is unique to PIA - make this
-            // more general.
-            return lhs->weight.uint8 > rhs->weight.uint8;
+            // See here (weight section) for explanation of types
+            // https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_filter0
+            switch(lhs->weight.type)
+            {
+            case FWP_UINT64:
+                return *(lhs->weight.uint64) > *(rhs->weight.uint64);
+            case FWP_EMPTY: // Weight determined by BFE
+            case FWP_UINT8:
+            default:
+                return lhs->weight.uint8 > rhs->weight.uint8;
+            }
         }
     };
 

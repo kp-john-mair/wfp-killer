@@ -16,7 +16,8 @@
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
 {
-    switch (ctrlType) {
+    switch(ctrlType)
+    {
     case CTRL_C_EVENT:
         std::cout << "Ctrl+C detected, exiting...\n";
         exit(0);
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
 
     if(!SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE))
     {
-        // If the handler cannot be installed, exit or handle the error
+        // If the handler cannot be installed, exit
         std::cerr <<  "Error: Unable to install Ctrl+C handler\n";
         return 1;
     }

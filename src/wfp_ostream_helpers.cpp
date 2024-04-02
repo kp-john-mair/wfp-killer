@@ -59,8 +59,9 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
     // Clip it to just the filename, not the full path
     std::string fileName = std::filesystem::path{blobToString(header.appId)}.filename().string();
 
-    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId, eventType, fileName, localAddress, header.localPort, remoteAddress, header.remotePort);
-    os << " - (Filter applied: " << *pFilter << ")";
+    os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId,
+        eventType, fileName, localAddress, header.localPort, remoteAddress, header.remotePort);
+    os << "\n    - (Filter applied: " << *pFilter << ")";
 
     return os;
 }
@@ -69,7 +70,19 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
     // TODO: Treat filter weights in a more generic way - PIA just uses a uint8, but that
     // won't be true of all providers
-    os << std::format("[Id: {}] [Weight: {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
+    switch(filter.weight.type)
+    {
+    case FWP_EMPTY: // Weight managed by bfe
+        os << std::format("[Id: {}] [Weight(BFE): auto]", filter.filterId);
+        break;
+    case FWP_UINT8:
+        os << std::format("[Id: {}] [Weight(8u): {:2}]", filter.filterId, static_cast<int>(filter.weight.uint8));
+        break;
+    case FWP_UINT64:
+        os << std::format("[Id: {}] [Weight(64u): {:2}]", filter.filterId, *filter.weight.uint64);
+        break;
+    }
+
     os << std::setw(8);
     os << WfpNameMapper::getName<WFPK_ACTION_TYPE>(filter.action.type).friendlyName << " ";
     os << WfpNameMapper::getName(filter.layerKey).friendlyName << " ";

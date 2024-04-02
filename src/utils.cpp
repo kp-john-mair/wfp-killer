@@ -1,7 +1,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <fwpmu.h>
-
 #include "utils.h"
 
 namespace wfpk {
@@ -53,5 +52,4 @@ std::string wideStringToString(const std::wstring &wstr)
 
     return str;
 }
-
 }

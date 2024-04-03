@@ -15,6 +15,9 @@ namespace wfpk {
 // Convenient alias for a Filter ID
 using FilterId = UINT64;
 
+// Zero GUID
+inline constexpr GUID ZeroGuid = {};
+
 // PIA-specific data
 inline constexpr GUID PIA_PROVIDER_KEY = { 0x8de3850, 0xa416, 0x4c47, { 0xb3, 0xad, 0x65, 0x7c, 0x5e, 0xf1, 0x40, 0xfb } };
 inline constexpr GUID PIA_SUBLAYER_KEY = { 0xf31e288d, 0xde5a, 0x4522, { 0x94, 0x58, 0xde, 0x14, 0xeb, 0xd0, 0xa3, 0xf8 } };
@@ -112,14 +115,38 @@ public:
     ~Engine();
 
 public:
+
+    // template <typename WfpObjectType, typename LookupType>
+    // WfpObjectType *getWfpObject(const LookupType &lookup)
+    // {
+    //     WfpObjectType *pObject{nullptr};
+    //     DWORD result =
+    // }
+
     // Returns an owning pointer to a FWPM_FILTER.
     // Caller is responsible for the life-time of this object
     FWPM_FILTER* getFilterById(UINT64 filterId) const
     {
         FWPM_FILTER *pFilter{nullptr};
-        FwpmFilterGetById(_handle, filterId, &pFilter);
+        DWORD result = FwpmFilterGetById(_handle, filterId, &pFilter);
+
+        if(result != ERROR_SUCCESS)
+            std::cerr << std::format("FwpmFilterGetById failed, code: {}\n", result);
 
         return pFilter;
+    }
+
+    // Returns an owning pointer to a FWPM_SUBLAYER
+    // Caller is responsible for the life-time of this object
+    FWPM_SUBLAYER* getSubLayerByKey(const GUID &subLayerKey) const
+    {
+        FWPM_SUBLAYER *pSublayer{nullptr};
+        DWORD result = FwpmSubLayerGetByKey(_handle, &subLayerKey, &pSublayer);
+
+        if(result != ERROR_SUCCESS)
+            std::cerr << std::format("FwpmSubLayerGetByKey failed, code: {}\n", result);
+
+        return pSublayer;
     }
 
     // Iterate over all filters for all given layers
@@ -172,6 +199,8 @@ private:
     // Ensure filters are sorted by weight
     struct FilterCompare
     {
+        // Make this a PtrT so it can work with raw pointers
+        // as well as smart ptrs
         template <typename PtrT>
         bool operator()(const PtrT &lhs, const PtrT &rhs) const
         {
@@ -180,7 +209,13 @@ private:
             switch(lhs->weight.type)
             {
             case FWP_UINT64:
-                return *(lhs->weight.uint64) > *(rhs->weight.uint64);
+                // if(lhs->weight.uint64 && rhs->weight.uint64)
+                //     return *(lhs->weight.uint64) > *(rhs->weight.uint64);
+                // else
+                // {
+                //     std::cerr << "invalid weight got null uint64!" << std::endl;
+                //     return true;
+                // }
             case FWP_EMPTY: // Weight determined by BFE
             case FWP_UINT8:
             default:

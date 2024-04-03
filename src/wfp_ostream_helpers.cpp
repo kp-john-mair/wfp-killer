@@ -37,10 +37,6 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
         break;
     }
 
-    assert(Engine::instance()); // pre-condition, an engine must exist
-    // Grab a pointer to the applied filter
-    std::unique_ptr<FWPM_FILTER, WfpDeleter> pFilter{Engine::instance()->getFilterById(filterId)};
-
     std::string localAddress;
     std::string remoteAddress;
     switch(header.ipVersion)
@@ -61,15 +57,26 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
 
     os << std::format("[protocol: {}] [FilterId: {}] {} {} {}:{} -> {}:{}", protocol, filterId,
         eventType, fileName, localAddress, header.localPort, remoteAddress, header.remotePort);
-    os << "\n    - (Filter applied: " << *pFilter << ")";
+
+    // pre-condition, an engine must exist
+    assert(Engine::instance());
+    // Grab a pointer to the applied filter
+    std::unique_ptr<FWPM_FILTER, WfpDeleter> pFilter{Engine::instance()->getFilterById(filterId)};
+    if(pFilter)
+        os << "\n    - (Filter applied: " << *pFilter << ")";
 
     return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
-    // TODO: Treat filter weights in a more generic way - PIA just uses a uint8, but that
-    // won't be true of all providers
+    if(filter.subLayerKey != ZeroGuid)
+    {
+        std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{Engine::instance()->getSubLayerByKey(filter.subLayerKey)};
+        std::string subLayerName = wideStringToString(pSubLayer->displayData.name);
+        os << "SubLayer: " << subLayerName << " ";
+    }
+
     switch(filter.weight.type)
     {
     case FWP_EMPTY: // Weight managed by bfe

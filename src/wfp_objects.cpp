@@ -76,16 +76,17 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
     for(size_t i = 0; i < numEntries; ++i)
     {
         FWPM_FILTER *pFilter{nullptr};
+
         // Grab a new filter so that we can carefully manage its lifetime
         DWORD result = FwpmFilterGetById(_engineHandle, pFilters[i]->filterId, &pFilter);
         if(result == ERROR_SUCCESS)
             _pFilters.insert(std::shared_ptr<FWPM_FILTER>{pFilter, WfpDeleter{}});
         else
-            std::cerr << "FwpmFilterGetById failed, code: " << result << std::endl;
+            std::cerr << "FwpmFilterGetById failed, code: " << std::to_string(result) << std::endl;
     }
 
     // Free the enum filters since we have shared_ptrs to new ones now anyway
-   FwpmFreeMemory(reinterpret_cast<void**>(&pFilters));
+    FwpmFreeMemory(reinterpret_cast<void**>(&pFilters));
     // Close the enumeration handle
     result = FwpmFilterDestroyEnumHandle(_engineHandle, enumHandle);
     if(result != ERROR_SUCCESS)

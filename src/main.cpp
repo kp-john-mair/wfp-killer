@@ -50,6 +50,9 @@ int main(int argc, char** argv)
             ("h,help", "Display this help message.")
             ("l,list", "List all PIA filters.")
             ("m,monitor", "Monitor WFP events.")
+            ("p,provider", "Limit output to a specific provider (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
+            ("L,layer", "Limit output to a specific layer (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
+            ("s,sublayer", "Limit output to a specified sublayer (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
             ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>());
 
         wfpk::WfpKiller wfpKiller;
@@ -63,7 +66,14 @@ int main(int argc, char** argv)
         }
         else if(result.count("list"))
         {
-            wfpKiller.listFilters();
+            const auto providers = result["provider"].as<std::vector<std::string>>();
+            const auto layers = result["layer"].as<std::vector<std::string>>();
+            const auto subLayers = result["sublayer"].as<std::vector<std::string>>();
+            wfpKiller.listFilters({
+                .providers = providers,
+                .layers = layers,
+                .subLayers = subLayers
+             });
             return 0;
         }
         else if(result.count("delete"))

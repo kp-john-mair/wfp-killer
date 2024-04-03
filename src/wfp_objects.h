@@ -149,6 +149,17 @@ public:
         return pSublayer;
     }
 
+    FWPM_PROVIDER* getProviderByKey(const GUID &providerKey) const
+    {
+        FWPM_PROVIDER *pProvider{nullptr};
+        DWORD result = FwpmProviderGetByKey(_handle, &providerKey, &pProvider);
+
+        if(result != ERROR_SUCCESS)
+            std::cerr << std::format("FwpmProviderGetByKey failed, code: {}\n", result);
+
+        return pProvider;
+    }
+
     // Iterate over all filters for all given layers
     template <typename IterFuncT>
         requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>

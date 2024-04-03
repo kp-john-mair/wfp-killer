@@ -44,7 +44,7 @@ auto SingleLayerFilterEnum::createEnumTemplate(const GUID &layerKey) const
     FWPM_FILTER_ENUM_TEMPLATE enumTemplate{};
     enumTemplate.enumType = FWP_FILTER_ENUM_OVERLAPPING;
     enumTemplate.layerKey = layerKey;
-    enumTemplate.providerKey = const_cast<GUID*>(&PIA_PROVIDER_KEY);
+    enumTemplate.providerKey = NULL; // const_cast<GUID*>(&PIA_PROVIDER_KEY);
     enumTemplate.actionMask = 0xFFFFFFFF;
 
     return enumTemplate;

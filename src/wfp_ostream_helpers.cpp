@@ -70,13 +70,20 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
 
 std::ostream& operator<<(std::ostream& os, const FWPM_FILTER& filter)
 {
-    if(filter.subLayerKey != ZeroGuid)
+    if(filter.providerKey)
+    {
+        std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{Engine::instance()->getProviderByKey(*filter.providerKey)};
+        std::string providerName = wideStringToString(pProvider->displayData.name);
+        os << "Provider Name: " << providerName << " ";
+    }
+
+/*     if(filter.subLayerKey != ZeroGuid)
     {
         std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{Engine::instance()->getSubLayerByKey(filter.subLayerKey)};
         std::string subLayerName = wideStringToString(pSubLayer->displayData.name);
         os << "SubLayer: " << subLayerName << " ";
     }
-
+ */
     switch(filter.weight.type)
     {
     case FWP_EMPTY: // Weight managed by bfe

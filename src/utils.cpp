@@ -52,4 +52,15 @@ std::string wideStringToString(const std::wstring &wstr)
 
     return str;
 }
+
+std::string toLowercase(const std::string &str)
+{
+    std::string ret;
+    ret.reserve(str.size());
+    for(unsigned char c : str)
+        ret.push_back(std::tolower(c));
+
+        return ret;
+}
+
 }

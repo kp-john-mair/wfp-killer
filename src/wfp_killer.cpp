@@ -1,6 +1,7 @@
 #include <format>
 #include <ranges>
 #include <algorithm>
+#include <regex>
 #include <string>
 #include <windows.h>
 #include <stdlib.h>
@@ -25,23 +26,6 @@ namespace
     };
 
     using Options = WfpKiller::Options;
-
-    bool caseInsensitiveMatch(const std::string& matchStr, const std::string& fullStr)
-    {
-        if(matchStr.empty() || fullStr.empty())
-            return false;
-
-        auto matchIter = matchStr.begin();
-        for(auto ch : fullStr | std::views::transform(tolower))
-        {
-            if(matchIter == matchStr.end()) break; // All chars in matchStr found
-            if(ch == std::tolower(*matchIter))
-            {
-                ++matchIter; // Move to the next char in matchStr
-            }
-        }
-        return matchIter == matchStr.end(); // True if all chars were matched
-    }
 }
 
 void WfpKiller::listFilters(const Options &options) const
@@ -52,14 +36,14 @@ void WfpKiller::listFilters(const Options &options) const
     {
         std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
         _engine.enumerateFiltersForLayer(layerKey, [&](const auto &pFilter) {
-            if(options.providers.size())
+            if(options.providerMatchers.size())
             {
                 // Skip empty providers - we only want to show filters
                 // with a provider and whose provider matches one in our list
                 if(!pFilter->providerKey)
                     return;
 
-                if(!isProviderMatched(options.providers, *pFilter->providerKey))
+                if(!isProviderMatched(options.providerMatchers, *pFilter->providerKey))
                     return;
             }
 
@@ -126,13 +110,15 @@ bool WfpKiller::deleteSingleFilter(FilterId filterId) const
     }
 }
 
-bool WfpKiller::isProviderMatched(const std::vector<std::string> &providerMatchers, const GUID &providerKey) const
+bool WfpKiller::isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID &providerKey) const
 {
     std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(providerKey)};
-    std::string providerName = wideStringToString(pProvider->displayData.name);
+
+    // lowercase the provider name - as we're doing a case insensitive compare
+    const std::string providerName = toLowercase(wideStringToString(pProvider->displayData.name));
 
     bool isProviderMatch = std::ranges::any_of(providerMatchers, [&](const auto &providerMatcher) {
-        return caseInsensitiveMatch(providerMatcher, providerName);
+        return std::regex_search(providerName, providerMatcher);
     });
 
     return isProviderMatch;

@@ -4,8 +4,10 @@
 #include <Shlobj.h> // For IsUserAnAdmin()
 #include "wfp_killer.h"
 #include "wfp_objects.h"
+#include "utils.h"
 #include "cxxopts.h"
 #include <stdlib.h>
+#include <regex>
 
 // Instruct the compiler to link these libs for us
 #pragma comment(lib, "Ws2_32.lib")
@@ -13,6 +15,7 @@
 #pragma comment(lib, "Shell32.lib")
 #pragma comment(lib, "Rpcrt4.lib")
 
+namespace {
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
 {
@@ -24,6 +27,22 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
         return TRUE;
     }
     return FALSE;
+}
+
+// This converts a vector of strings to a vector of regex
+// Since our matchers are case insensitive, we also lowercase them here too.
+std::vector<std::regex> stringVecToMatchers(const std::vector<std::string> &vec)
+{
+    std::vector<std::regex> matchers;
+    matchers.reserve(vec.size());
+
+    for(const auto &pattern : vec)
+    {
+        matchers.emplace_back(wfpk::toLowercase(pattern));
+    }
+
+    return matchers;
+}
 }
 
 int main(int argc, char** argv)
@@ -48,7 +67,7 @@ int main(int argc, char** argv)
         options.allow_unrecognised_options();
         options.add_options()
             ("h,help", "Display this help message.")
-            ("l,list", "List all PIA filters.")
+            ("l,list", "List all filters across all layers.")
             ("m,monitor", "Monitor WFP events.")
             ("p,provider", "Limit output to a specific provider (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
             ("L,layer", "Limit output to a specific layer (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
@@ -66,13 +85,13 @@ int main(int argc, char** argv)
         }
         else if(result.count("list"))
         {
-            const auto providers = result["provider"].as<std::vector<std::string>>();
-            const auto layers = result["layer"].as<std::vector<std::string>>();
-            const auto subLayers = result["sublayer"].as<std::vector<std::string>>();
+            const auto providers = stringVecToMatchers(result["provider"].as<std::vector<std::string>>());
+            const auto layers = stringVecToMatchers(result["layer"].as<std::vector<std::string>>());
+            const auto subLayers = stringVecToMatchers(result["sublayer"].as<std::vector<std::string>>());
             wfpKiller.listFilters({
-                .providers = providers,
-                .layers = layers,
-                .subLayers = subLayers
+                .providerMatchers = providers,
+                .layerMatchers = layers,
+                .subLayerMatchers = subLayers
              });
             return 0;
         }

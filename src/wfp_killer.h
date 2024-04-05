@@ -3,6 +3,7 @@
 #include "wfp_objects.h"
 #include <string>
 #include <vector>
+#include <regex>
 
 namespace wfpk {
 // Core application class
@@ -11,9 +12,9 @@ class WfpKiller
 public:
     struct Options
     {
-        std::vector<std::string> providers;
-        std::vector<std::string> layers;
-        std::vector<std::string> subLayers;
+        std::vector<std::regex> providerMatchers;
+        std::vector<std::regex> layerMatchers;
+        std::vector<std::regex> subLayerMatchers;
     };
 
 public:
@@ -23,7 +24,7 @@ public:
 
 private:
     bool deleteSingleFilter(FilterId filterId) const;
-    bool isProviderMatched(const std::vector<std::string> &providerMatchers, const GUID &providerKey) const;
+    bool isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID &providerKey) const;
 
 private:
     Engine _engine;

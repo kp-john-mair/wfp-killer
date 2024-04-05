@@ -9,6 +9,8 @@
 #include <vector>
 #include <optional>
 #include <memory>
+#include <ranges>
+#include <concepts>
 #include <guiddef.h>
 #include <assert.h>
 
@@ -47,6 +49,8 @@ std::string blobToString(const FWP_BYTE_BLOB &blob);
 std::string wideStringToString(const std::wstring &wstr);
 // Convert a GUID to a std::string
 std::string guidToString(const GUID& guid);
+// Lowercase a string
+std::string toLowercase(const std::string& input);
 
 void fwpConditionValueHandler(const FWP_CONDITION_VALUE &value, auto handlerFunc)
 {

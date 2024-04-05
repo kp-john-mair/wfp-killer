@@ -67,11 +67,11 @@ int main(int argc, char** argv)
         options.allow_unrecognised_options();
         options.add_options()
             ("h,help", "Display this help message.")
-            ("l,list", "List all filters across all layers.")
+            ("l,list", "List all filters across all layers (also accepts an optional partial name match for a provider name).", cxxopts::value<std::vector<std::string>>())
             ("m,monitor", "Monitor WFP events.")
-            ("p,provider", "Limit output to a specific provider (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
-            ("L,layer", "Limit output to a specific layer (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
-            ("s,sublayer", "Limit output to a specified sublayer (accepts partial name match)", cxxopts::value<std::vector<std::string>>()->default_value({}))
+            ("p,provider", "Limit output to a specific provider (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
+            ("L,layer", "Limit output to a specific layer (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
+            ("s,sublayer", "Limit output to a specified sublayer (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
             ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>());
 
         wfpk::WfpKiller wfpKiller;
@@ -85,7 +85,10 @@ int main(int argc, char** argv)
         }
         else if(result.count("list"))
         {
-            const auto providers = stringVecToMatchers(result["provider"].as<std::vector<std::string>>());
+            const auto providers = stringVecToMatchers(result["list"].as<std::vector<std::string>>());
+            std::cout << "Number of list options: " << providers.size() << std::endl;
+
+            //const auto providers = stringVecToMatchers(result["provider"].as<std::vector<std::string>>());
             const auto layers = stringVecToMatchers(result["layer"].as<std::vector<std::string>>());
             const auto subLayers = stringVecToMatchers(result["sublayer"].as<std::vector<std::string>>());
             wfpKiller.listFilters({

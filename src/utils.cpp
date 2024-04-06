@@ -63,4 +63,33 @@ std::string toLowercase(const std::string &str)
         return ret;
 }
 
+std::string getErrorString(DWORD errorCode)
+{
+    LPSTR errMsg = nullptr;
+    DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+
+    DWORD messageLength = FormatMessageA(
+        flags,                 // Use system message tables to retrieve error text
+        nullptr,               // No module handle is necessary
+        errorCode,             // Pass in the error code to look up
+        0,                     // Automatically choose the correct language
+        (LPSTR)&errMsg,        // Buffer that will receive the error message
+        0,                     // Minimum number of characters to allocate for errMsg
+        nullptr                // No varargs for additional error-specific inserts
+    );
+
+    if(messageLength == 0)
+    {
+        // Handle the case where there is no error message found
+        return "Unknown error code: " + std::to_string(errorCode);
+    }
+
+    std::string errorMessage(errMsg);
+
+    // Free the buffer allocated by FormatMessage
+    LocalFree(errMsg);
+
+    return errorMessage;
+}
+
 }

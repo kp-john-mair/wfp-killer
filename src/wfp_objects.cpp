@@ -18,7 +18,7 @@ Engine::Engine()
     DWORD result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, NULL, &_handle);
     if(result != ERROR_SUCCESS)
     {
-        throw WfpError{"FwpmEngineOpen failed, code: " + result};
+        throw WfpError{"FwpmEngineOpen failed, code:", result};
     }
 }
 
@@ -34,7 +34,7 @@ Engine::~Engine()
     if(result != ERROR_SUCCESS)
     {
         // Cannot throw in a destructor
-        std::cerr << "FwpmEngineClose failed, code: " << result;
+        std::cerr << "FwpmEngineClose failed: " << getErrorString(result);
     }
 }
 
@@ -61,7 +61,7 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
     result = FwpmFilterCreateEnumHandle(_engineHandle, &enumTemplate, &enumHandle);
     if(result != ERROR_SUCCESS)
     {
-        throw WfpError{"FwpmFilterCreateEnumHandle failed: " + result};
+        throw WfpError{"FwpmFilterCreateEnumHandle failed:", result};
     }
 
     FWPM_FILTER **pFilters{nullptr};
@@ -70,7 +70,7 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
     result = FwpmFilterEnum(_engineHandle, enumHandle, MaxFilterCount, &pFilters, &numEntries);
     if(result != ERROR_SUCCESS)
     {
-        throw WfpError{"FwpmFilterEnum failed: " + result};
+        throw WfpError{"FwpmFilterEnum failed:", result};
     }
 
     for(size_t i = 0; i < numEntries; ++i)
@@ -82,7 +82,7 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
         if(result == ERROR_SUCCESS)
             _pFilters.insert(std::shared_ptr<FWPM_FILTER>{pFilter, WfpDeleter{}});
         else
-            std::cerr << "FwpmFilterGetById failed, code: " << std::to_string(result) << std::endl;
+            std::cerr << "FwpmFilterGetById failed: " << getErrorString(result) << std::endl;
     }
 
     // Free the enum filters since we have shared_ptrs to new ones now anyway
@@ -92,7 +92,7 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
     if(result != ERROR_SUCCESS)
     {
         // Just showing the error - we have the filters already, so let's give it a chance
-        std::cerr << "FwpmFilterDestroyEnumHandle failed, code: " + result << std::endl;
+        std::cerr << "FwpmFilterDestroyEnumHandle failed: " + getErrorString(result) << std::endl;
     }
 }
 }

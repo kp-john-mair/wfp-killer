@@ -61,9 +61,9 @@ std::ostream& operator<<(std::ostream& os, const FWPM_NET_EVENT& event)
     // pre-condition, an engine must exist
     assert(Engine::instance());
     // Grab a pointer to the applied filter
-    std::unique_ptr<FWPM_FILTER, WfpDeleter> pFilter{Engine::instance()->getFilterById(filterId)};
-    if(pFilter)
-        os << "\n    - (Filter applied: " << *pFilter << ")";
+     std::unique_ptr<FWPM_FILTER, WfpDeleter> pFilter{Engine::instance()->getFilterById(filterId)};
+     if(pFilter)
+         os << "\n    - (Filter applied: " << *pFilter << ")";
 
     return os;
 }

@@ -138,12 +138,12 @@ int main(int argc, char** argv)
     }
     catch(const wfpk::WfpError& ex)
     {
-        std::cerr << "Fatal WFP error: " << ex.what() << " Unable to continue.\n";
+        std::cerr << "Fatal WFP error: " << ex.what() << "\n";
         return 1;
     }
     catch(const std::exception &ex)
     {
-        std::cerr << "Fatal error: " << ex.what() << " Unable to continue.\n";
+        std::cerr << "Fatal error: " << ex.what() << "\n";
         return 1;
     }
     catch(...)

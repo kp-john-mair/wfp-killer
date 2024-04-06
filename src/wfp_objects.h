@@ -9,6 +9,7 @@
 #include <optional>
 #include <fwpmu.h>
 #include <concepts>
+#include <source_location>
 #include "utils.h"
 
 namespace wfpk {
@@ -25,7 +26,16 @@ inline constexpr GUID PIA_SUBLAYER_KEY = { 0xf31e288d, 0xde5a, 0x4522, { 0x94, 0
 // Base error
 class WfpError : public std::runtime_error
 {
-    using std::runtime_error::runtime_error;
+public:
+    WfpError(const std::string &message, DWORD code, const std::source_location& loc = std::source_location::current())
+    : std::runtime_error(formatErrorMessage(message, code, loc))
+    {}
+
+private:
+    static std::string formatErrorMessage(const std::string &message, DWORD code, const std::source_location &loc)
+    {
+        return std::format("{} {} @ (file: {}, line: {})", message, getErrorString(code), loc.file_name(), loc.line());
+    }
 };
 
 // Generic deleter for WFP objects
@@ -80,8 +90,9 @@ public:
             &_eventSubscriptionHandle
         );
 
+
         if(result != ERROR_SUCCESS)
-            throw WfpError{"FwpmNetEventSubscribe failed, code: " + result};
+            throw WfpError{"FwpmNetEventSubscribe failed:", result};
     }
 
     ~EventMonitor()
@@ -131,7 +142,7 @@ public:
         DWORD result = FwpmFilterGetById(_handle, filterId, &pFilter);
 
         if(result != ERROR_SUCCESS)
-            std::cerr << std::format("FwpmFilterGetById failed, code: {}\n", result);
+            std::cerr << std::format("FwpmFilterGetById failed: {}\n", getErrorString(result));
 
         return pFilter;
     }
@@ -144,7 +155,7 @@ public:
         DWORD result = FwpmSubLayerGetByKey(_handle, &subLayerKey, &pSublayer);
 
         if(result != ERROR_SUCCESS)
-            std::cerr << std::format("FwpmSubLayerGetByKey failed, code: {}\n", result);
+            std::cerr << std::format("FwpmSubLayerGetByKey failed: {}\n", getErrorString(result));
 
         return pSublayer;
     }
@@ -155,7 +166,7 @@ public:
         DWORD result = FwpmProviderGetByKey(_handle, &providerKey, &pProvider);
 
         if(result != ERROR_SUCCESS)
-            std::cerr << std::format("FwpmProviderGetByKey failed, code: {}\n", result);
+            std::cerr << std::format("FwpmProviderGetByKey failed: {}\n", getErrorString(result));
 
         return pProvider;
     }

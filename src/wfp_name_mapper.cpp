@@ -29,6 +29,9 @@ namespace
         WFP_NAME(FWPM_CONDITION_IP_LOCAL_ADDRESS, "local_ip"),
         WFP_NAME(FWPM_CONDITION_IP_LOCAL_PORT, "local_port"),
         WFP_NAME(FWPM_CONDITION_IP_LOCAL_INTERFACE, "local_interface"),
+        WFP_NAME(FWPM_CONDITION_IP_PROTOCOL, "protocol"),
+        WFP_NAME(FWPM_CONDITION_INTERFACE_TYPE, "interface_type"),
+        WFP_NAME(FWPM_CONDITION_INTERFACE_INDEX, "interface_index")
     };
 
     // Match types, see full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ne-fwptypes-fwp_match_type
@@ -37,7 +40,11 @@ namespace
         WFP_NAME(FWP_MATCH_GREATER, "greater"),
         WFP_NAME(FWP_MATCH_LESS, "less than"),
         WFP_NAME(FWP_MATCH_GREATER_OR_EQUAL, "great or equal"),
-        WFP_NAME(FWP_MATCH_LESS_OR_EQUAL, "less or equal")
+        WFP_NAME(FWP_MATCH_LESS_OR_EQUAL, "less or equal"),
+        WFP_NAME(FWP_MATCH_RANGE, "range match"),
+        WFP_NAME(FWP_MATCH_NOT_EQUAL, "not equal"),
+        WFP_NAME(FWP_MATCH_PREFIX, "prefix equal"),
+        WFP_NAME(FWP_MATCH_NOT_PREFIX, "prefix not equal")
     };
 
     // IP Version types, see full list here: https://learn.microsoft.com/en-us/windows/win32/api/fwptypes/ne-fwptypes-fwp_ip_version

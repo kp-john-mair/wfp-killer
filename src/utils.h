@@ -52,6 +52,8 @@ std::string guidToString(const GUID& guid);
 // Lowercase a string
 std::string toLowercase(const std::string& input);
 
+std::string getErrorString(DWORD errorCode);
+
 void fwpConditionValueHandler(const FWP_CONDITION_VALUE &value, auto handlerFunc)
 {
     switch(value.type)

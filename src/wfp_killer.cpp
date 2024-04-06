@@ -100,7 +100,7 @@ bool WfpKiller::deleteSingleFilter(FilterId filterId) const
     DWORD result = _engine.deleteFilterById(filterId);
     if(result != ERROR_SUCCESS)
     {
-        std::cerr << std::format("Error: Failed to delete filter with id {} Code: {}\n", filterId, result);
+        std::cerr << std::format("Error: Failed to delete filter with id {}: {}\n", filterId, getErrorString(result));
         return false;
     }
     else

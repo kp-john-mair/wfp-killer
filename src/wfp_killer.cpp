@@ -38,15 +38,10 @@ void WfpKiller::listFilters(const Options &options) const
 
         std::unordered_map<GUID, FilterSet> filtersBySubLayer;
         FilterSet filtersWithoutSublayer;
+
         for(const auto &pFilter : filters)
         {
-            if(!options.providerMatchers.empty())
-            {
-                if(!isProviderMatched(options.providerMatchers, pFilter->providerKey))
-                    continue;
-            }
-
-            // Non-existent sublayers are represented as ZeroGuid
+             // Non-existent sublayers are represented as ZeroGuid
             if(pFilter->subLayerKey != ZeroGuid)
             {
                 auto &set = filtersBySubLayer[pFilter->subLayerKey];
@@ -56,18 +51,45 @@ void WfpKiller::listFilters(const Options &options) const
             {
                 filtersWithoutSublayer.insert(pFilter);
             }
-
-            ++filterCount;
         }
 
         if(filtersBySubLayer.empty() && filtersWithoutSublayer.empty())
             continue;
+
+
 
         std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
 
         for(const auto &[subLayerKey, filterSet] : filtersBySubLayer)
         {
             std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{_engine.getSubLayerByKey(subLayerKey)};
+            std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider;
+
+            // TODO: move this out into its own function isFilterNameMatch() that takes a filter and derives the
+            // providerKey and subLayerKey and performs the match, returning a boolean
+            if(pSubLayer && pSubLayer->providerKey)
+            {
+                pProvider.reset(_engine.getProviderByKey(*pSubLayer->providerKey));
+            }
+
+            bool shouldShow{false};
+            if(pSubLayer)
+            {
+                std::string subLayerName = toLowercase(wideStringToString(pSubLayer->displayData.name));
+                if(isNameMatched(options.subLayerMatchers, subLayerName))
+                    shouldShow = true;
+            }
+
+            if(!shouldShow && pProvider)
+            {
+                std::string providerName = toLowercase(wideStringToString(pProvider->displayData.name));
+                if(isNameMatched(options.providerMatchers, providerName))
+                    shouldShow = true;
+            }
+
+            if(!shouldShow)
+                continue;
+
             if(pSubLayer)
             {
                 std::cout << std::format("SubLayer: {}\n\n", wideStringToString(pSubLayer->displayData.name));
@@ -80,6 +102,7 @@ void WfpKiller::listFilters(const Options &options) const
             for(const auto &pFilter : filterSet)
             {
                 std::cout << *pFilter << "\n";
+                ++filterCount;
             }
         }
     }
@@ -142,22 +165,13 @@ bool WfpKiller::deleteSingleFilter(FilterId filterId) const
     }
 }
 
-bool WfpKiller::isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID *pProviderKey) const
+bool WfpKiller::isNameMatched(const std::vector<std::regex> &matchers, const std::string &name) const
 {
-    // A provider isn't guaranteed to exist - skip in that case
-    if(pProviderKey == nullptr)
-        return false;
-
-    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(*pProviderKey)};
-
-    // lowercase the provider name - as we're doing a case insensitive compare
-    const std::string providerName = toLowercase(wideStringToString(pProvider->displayData.name));
-
-    bool isProviderMatch = std::ranges::any_of(providerMatchers, [&](const auto &providerMatcher) {
-        return std::regex_search(providerName, providerMatcher);
+    bool matched = std::ranges::any_of(matchers, [&](const auto &providerMatcher) {
+        return std::regex_search(name, providerMatcher);
     });
 
-    return isProviderMatch;
+    return matched;
 }
 
 }

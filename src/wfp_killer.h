@@ -15,6 +15,11 @@ public:
         std::vector<std::regex> providerMatchers;
         std::vector<std::regex> layerMatchers;
         std::vector<std::regex> subLayerMatchers;
+
+        bool isEmpty() const
+        {
+            return providerMatchers.empty() && layerMatchers.empty() && subLayerMatchers.empty();
+        }
     };
 
 public:
@@ -24,7 +29,7 @@ public:
 
 private:
     bool deleteSingleFilter(FilterId filterId) const;
-    bool isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID *pProviderKey) const;
+    bool isNameMatched(const std::vector<std::regex> &matchers, const std::string &name) const;
 
 private:
     Engine _engine;

@@ -88,13 +88,17 @@ int main(int argc, char** argv)
             const auto &listValues = result["list"].as<std::vector<std::string>>();
             bool shouldShowAllFilters = std::ranges::find(listValues, "all") != listValues.end();
 
-            std::vector<std::regex> providers;
+            std::vector<std::regex> providers, subLayers;
 
             if(!shouldShowAllFilters)
+            {
+                // We match the 'names' against both providers and subLayers
+                // so that both fields are searched
                 providers = stringVecToMatchers(listValues);
+                subLayers = providers;
+            }
 
             const auto layers = stringVecToMatchers({result["layer"].as<std::vector<std::string>>()});
-            const auto subLayers = stringVecToMatchers(result["sublayer"].as<std::vector<std::string>>());
             wfpKiller.listFilters({
                 .providerMatchers = providers,
                 .layerMatchers = layers,

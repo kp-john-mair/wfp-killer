@@ -8,7 +8,7 @@
 namespace wfpk {
 namespace
 {
-    #define WFP_NAME(rawName, friendlyName) { rawName, { friendlyName, #rawName } }
+    #define WFP_NAME(guid, friendlyName) { guid, { friendlyName, #guid } }
 
     const std::unordered_map<GUID, WfpName> kGuidWfpNameMap {
         // Layer names, see full list here: https://learn.microsoft.com/en-us/windows/win32/fwp/management-filtering-layer-identifiers-

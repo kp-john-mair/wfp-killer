@@ -34,22 +34,54 @@ void WfpKiller::listFilters(const Options &options) const
 
     for(const auto &layerKey : kPiaLayers)
     {
-        std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
-        _engine.enumerateFiltersForLayer(layerKey, [&](const auto &pFilter) {
-            if(options.providerMatchers.size())
-            {
-                // Skip empty providers - we only want to show filters
-                // with a provider and whose provider matches one in our list
-                if(!pFilter->providerKey)
-                    return;
+        const auto &filters = _engine.filtersForLayer(layerKey);
 
-                if(!isProviderMatched(options.providerMatchers, *pFilter->providerKey))
-                    return;
+        std::unordered_map<GUID, FilterSet> filtersBySubLayer;
+        FilterSet filtersWithoutSublayer;
+        for(const auto &pFilter : filters)
+        {
+            if(!options.providerMatchers.empty())
+            {
+                if(!isProviderMatched(options.providerMatchers, pFilter->providerKey))
+                    continue;
             }
 
-            std::cout << *pFilter << std::endl;
+            // Non-existent sublayers are represented as ZeroGuid
+            if(pFilter->subLayerKey != ZeroGuid)
+            {
+                auto &set = filtersBySubLayer[pFilter->subLayerKey];
+                set.insert(pFilter);
+            }
+            else
+            {
+                filtersWithoutSublayer.insert(pFilter);
+            }
+
             ++filterCount;
-        });
+        }
+
+        if(filtersBySubLayer.empty() && filtersWithoutSublayer.empty())
+            continue;
+
+        std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
+
+        for(const auto &[subLayerKey, filterSet] : filtersBySubLayer)
+        {
+            std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{_engine.getSubLayerByKey(subLayerKey)};
+            if(pSubLayer)
+            {
+                std::cout << std::format("SubLayer: {}\n\n", wideStringToString(pSubLayer->displayData.name));
+            }
+            else
+            {
+                std::cerr << std::format("Got an invalid subLayer GUID: {}\n", WfpNameMapper::getName(subLayerKey).rawName);
+            }
+
+            for(const auto &pFilter : filterSet)
+            {
+                std::cout << *pFilter << "\n";
+            }
+        }
     }
 
     std::cout << std::format("\nTotal number of filters: {}\n", filterCount);
@@ -110,9 +142,13 @@ bool WfpKiller::deleteSingleFilter(FilterId filterId) const
     }
 }
 
-bool WfpKiller::isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID &providerKey) const
+bool WfpKiller::isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID *pProviderKey) const
 {
-    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(providerKey)};
+    // A provider isn't guaranteed to exist - skip in that case
+    if(pProviderKey == nullptr)
+        return false;
+
+    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(*pProviderKey)};
 
     // lowercase the provider name - as we're doing a case insensitive compare
     const std::string providerName = toLowercase(wideStringToString(pProvider->displayData.name));

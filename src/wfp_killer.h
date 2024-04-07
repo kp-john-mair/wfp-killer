@@ -24,7 +24,7 @@ public:
 
 private:
     bool deleteSingleFilter(FilterId filterId) const;
-    bool isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID &providerKey) const;
+    bool isProviderMatched(const std::vector<std::regex> &providerMatchers, const GUID *pProviderKey) const;
 
 private:
     Engine _engine;

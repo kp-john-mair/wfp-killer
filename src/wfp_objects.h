@@ -49,8 +49,98 @@ struct WfpDeleter
     }
 };
 
-class SingleLayerFilterEnum;
-class FilterEnum;
+// Ensure filters are sorted by weight
+struct FilterCompare
+{
+    // Make this a PtrT so it can work with raw pointers
+    // as well as smart ptrs
+    template <typename PtrT>
+    bool operator()(const PtrT &lhs, const PtrT &rhs) const
+    {
+        // See here (weight section) for explanation of types
+        // https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_filter0
+        switch(lhs->weight.type)
+        {
+        // we don't check for this as the deref causes crashes sometimes - use u8 instead
+        case FWP_UINT64:
+            // if(lhs->weight.uint64 && rhs->weight.uint64)
+            //     return *(lhs->weight.uint64) > *(rhs->weight.uint64);
+            // else
+            // {
+            //     std::cerr << "invalid weight got null uint64!" << std::endl;
+            //     return true;
+            // }
+        case FWP_EMPTY: // Weight determined by BFE
+        case FWP_UINT8:
+        default:
+            return lhs->weight.uint8 > rhs->weight.uint8;
+        }
+    }
+};
+
+// Use a multiset so we can have multiple filters of the same weight
+using FilterSet = std::multiset<std::shared_ptr<FWPM_FILTER>, FilterCompare>;
+
+// RAII Wrapper around FWPM_FILTER enumeration classes
+class SingleLayerFilterEnum
+{
+    enum { MaxFilterCount = 5000 };
+public:
+    SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle);
+    SingleLayerFilterEnum(SingleLayerFilterEnum&&) = delete;
+    SingleLayerFilterEnum(const SingleLayerFilterEnum&) = delete;
+    SingleLayerFilterEnum& operator=(const SingleLayerFilterEnum&) = delete;
+    SingleLayerFilterEnum& operator=(SingleLayerFilterEnum&&) = delete;
+
+private:
+    // Build the enumeration template
+    auto createEnumTemplate(const GUID &layerKey) const -> FWPM_FILTER_ENUM_TEMPLATE;
+
+public:
+    template <typename IterFuncT>
+        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
+    void forEach(IterFuncT func) const
+    {
+        for(const auto &filter : _pFilters)
+        {
+            func(filter);
+        }
+    }
+
+    const FilterSet& filters() const { return _pFilters; }
+
+private:
+    HANDLE _engineHandle{};
+    FilterSet _pFilters;
+};
+
+// Wraps SingleLayerFilterEnum to allow iteration over
+// multiple WFP layers at once
+class FilterEnum
+{
+public:
+    FilterEnum(const std::vector<GUID> &layers, HANDLE engineHandle)
+    : _engineHandle{engineHandle}
+    , _layers{layers}
+    {}
+
+public:
+    template <typename IterFuncT>
+        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
+    void forEach(IterFuncT func) const
+    {
+        for(const auto &layer : _layers)
+        {
+            SingleLayerFilterEnum{layer, _engineHandle}.forEach([&](const auto &pFilter) {
+                func(pFilter);
+            });
+        }
+    }
+
+private:
+    HANDLE _engineHandle{};
+    std::vector<GUID> _layers;
+};
 
 // Monitor live WFP events
 class EventMonitor
@@ -142,7 +232,10 @@ public:
         DWORD result = FwpmFilterGetById(_handle, filterId, &pFilter);
 
         if(result != ERROR_SUCCESS)
+        {
             std::cerr << std::format("FwpmFilterGetById failed: {}\n", getErrorString(result));
+            return nullptr;
+        }
 
         return pFilter;
     }
@@ -155,7 +248,10 @@ public:
         DWORD result = FwpmSubLayerGetByKey(_handle, &subLayerKey, &pSublayer);
 
         if(result != ERROR_SUCCESS)
+        {
             std::cerr << std::format("FwpmSubLayerGetByKey failed: {}\n", getErrorString(result));
+            return nullptr;
+        }
 
         return pSublayer;
     }
@@ -166,7 +262,10 @@ public:
         DWORD result = FwpmProviderGetByKey(_handle, &providerKey, &pProvider);
 
         if(result != ERROR_SUCCESS)
+        {
             std::cerr << std::format("FwpmProviderGetByKey failed: {}\n", getErrorString(result));
+            return nullptr;
+        }
 
         return pProvider;
     }
@@ -187,6 +286,12 @@ public:
         SingleLayerFilterEnum{layerKey, _handle}.forEach(func);
     }
 
+    auto filtersForLayer(const GUID &layerKey) const
+        -> FilterSet
+    {
+        return SingleLayerFilterEnum{layerKey, _handle}.filters();
+    }
+
     template <typename CallbackFuncT>
         requires std::invocable<CallbackFuncT, void*, const FWPM_NET_EVENT*>
     void monitorEvents(CallbackFuncT callbackFunc)
@@ -204,97 +309,5 @@ public:
 private:
     HANDLE _handle{};
     std::unique_ptr<EventMonitor> _pMonitor;
-};
-
-// RAII Wrapper around FWPM_FILTER enumeration classes
-class SingleLayerFilterEnum
-{
-    enum { MaxFilterCount = 5000 };
-public:
-    SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle);
-    SingleLayerFilterEnum(SingleLayerFilterEnum&&) = delete;
-    SingleLayerFilterEnum(const SingleLayerFilterEnum&) = delete;
-    SingleLayerFilterEnum& operator=(const SingleLayerFilterEnum&) = delete;
-    SingleLayerFilterEnum& operator=(SingleLayerFilterEnum&&) = delete;
-
-private:
-    // Ensure filters are sorted by weight
-    struct FilterCompare
-    {
-        // Make this a PtrT so it can work with raw pointers
-        // as well as smart ptrs
-        template <typename PtrT>
-        bool operator()(const PtrT &lhs, const PtrT &rhs) const
-        {
-            // See here (weight section) for explanation of types
-            // https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_filter0
-            switch(lhs->weight.type)
-            {
-            case FWP_UINT64:
-                // if(lhs->weight.uint64 && rhs->weight.uint64)
-                //     return *(lhs->weight.uint64) > *(rhs->weight.uint64);
-                // else
-                // {
-                //     std::cerr << "invalid weight got null uint64!" << std::endl;
-                //     return true;
-                // }
-            case FWP_EMPTY: // Weight determined by BFE
-            case FWP_UINT8:
-            default:
-                return lhs->weight.uint8 > rhs->weight.uint8;
-            }
-        }
-    };
-
-    // Use a multiset so we can have multiple filters of the same weight
-    using FilterSet = std::multiset<std::shared_ptr<FWPM_FILTER>, FilterCompare>;
-
-    // Build the enumeration template
-    auto createEnumTemplate(const GUID &layerKey) const -> FWPM_FILTER_ENUM_TEMPLATE;
-
-public:
-    template <typename IterFuncT>
-        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
-    void forEach(IterFuncT func) const
-    {
-        for(const auto &filter : _pFilters)
-        {
-            func(filter);
-        }
-    }
-
-    const FilterSet& filters() const { return _pFilters; }
-
-private:
-    HANDLE _engineHandle{};
-    FilterSet _pFilters;
-};
-
-// Wraps SingleLayerFilterEnum to allow iteration over
-// multiple WFP layers at once
-class FilterEnum
-{
-public:
-    FilterEnum(const std::vector<GUID> &layers, HANDLE engineHandle)
-    : _engineHandle{engineHandle}
-    , _layers{layers}
-    {}
-
-public:
-    template <typename IterFuncT>
-        requires std::invocable<IterFuncT, std::shared_ptr<FWPM_FILTER>>
-    void forEach(IterFuncT func) const
-    {
-        for(const auto &layer : _layers)
-        {
-            SingleLayerFilterEnum{layer, _engineHandle}.forEach([&](const auto &pFilter) {
-                func(pFilter);
-            });
-        }
-    }
-
-private:
-    HANDLE _engineHandle{};
-    std::vector<GUID> _layers;
 };
 }

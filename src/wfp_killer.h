@@ -30,6 +30,7 @@ public:
 private:
     bool deleteSingleFilter(FilterId filterId) const;
     bool isNameMatched(const std::vector<std::regex> &matchers, const std::string &name) const;
+    bool isFilterNameMatched(const std::vector<std::regex> &matchers, const std::shared_ptr<FWPM_FILTER> &pFilter) const;
 
 private:
     Engine _engine;

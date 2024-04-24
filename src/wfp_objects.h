@@ -20,8 +20,8 @@ using FilterId = UINT64;
 inline constexpr GUID ZeroGuid = {};
 
 // PIA-specific data
-inline constexpr GUID PIA_PROVIDER_KEY = { 0x8de3850, 0xa416, 0x4c47, { 0xb3, 0xad, 0x65, 0x7c, 0x5e, 0xf1, 0x40, 0xfb } };
-inline constexpr GUID PIA_SUBLAYER_KEY = { 0xf31e288d, 0xde5a, 0x4522, { 0x94, 0x58, 0xde, 0x14, 0xeb, 0xd0, 0xa3, 0xf8 } };
+inline constinit GUID PIA_PROVIDER_KEY = { 0x8de3850, 0xa416, 0x4c47, { 0xb3, 0xad, 0x65, 0x7c, 0x5e, 0xf1, 0x40, 0xfb } };
+inline constinit GUID PIA_SUBLAYER_KEY = { 0xf31e288d, 0xde5a, 0x4522, { 0x94, 0x58, 0xde, 0x14, 0xeb, 0xd0, 0xa3, 0xf8 } };
 
 // Base error
 class WfpError : public std::runtime_error
@@ -217,6 +217,7 @@ public:
 
 public:
 
+    FilterId add(const FWPM_FILTER &filter);
     // template <typename WfpObjectType, typename LookupType>
     // WfpObjectType *getWfpObject(const LookupType &lookup)
     // {

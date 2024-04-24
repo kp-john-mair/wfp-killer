@@ -28,6 +28,34 @@ namespace
     using Options = WfpKiller::Options;
 }
 
+void WfpKiller::createFilter()
+{
+    FWPM_FILTER filter{};
+
+    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(PIA_PROVIDER_KEY)};
+
+
+    // basic setup
+    filter.providerKey = &PIA_PROVIDER_KEY;
+    filter.subLayerKey = PIA_SUBLAYER_KEY;
+    filter.flags = FWPM_FILTER_FLAG_PERSISTENT | FWPM_FILTER_FLAG_INDEXED;
+    filter.weight.type = FWP_UINT8;
+    filter.weight.uint8 = 5;
+
+    filter.displayData = pProvider->displayData;
+
+    filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+
+    filter.action.type = FWP_ACTION_PERMIT;
+
+
+    std::cout << "trying to add new filter to engine" << std::endl;
+
+    auto id = _engine.add(filter);
+
+    std::cout << "Should have created a filter: " << id << std::endl;
+}
+
 void WfpKiller::listFilters(const Options &options) const
 {
     size_t filterCount{0};

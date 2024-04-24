@@ -131,7 +131,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     case FWP_BYTE_BLOB_TYPE:
     {
         std::filesystem::path path = blobToString(*condition.conditionValue.byteBlob);
-        os << path.filename().string();
+        os << path.string();
 
         break;
     }

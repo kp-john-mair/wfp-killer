@@ -72,13 +72,21 @@ int main(int argc, char** argv)
             ("p,provider", "Limit output to a specific provider (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
             ("L,layer", "Limit output to a specific layer (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
             ("s,sublayer", "Limit output to a specified sublayer (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
-            ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>());
+            ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>())
+            ("c,create", "Create a dummy filter for testing");
 
         wfpk::WfpKiller wfpKiller;
 
         auto result = options.parse(argc, argv);
 
-        if(result.count("help"))
+        if(result.count("create"))
+        {
+            std::cout << "Trying to create a dummy callout filter\n";
+            wfpKiller.createFilter();
+            return 0;
+        }
+
+        else if(result.count("help"))
         {
           std::cout << options.help();
           return 0;

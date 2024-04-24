@@ -22,6 +22,22 @@ Engine::Engine()
     }
 }
 
+FilterId Engine::add(const FWPM_FILTER &filter)
+{
+    UINT64 id = 0;
+
+    DWORD result = FwpmFilterAdd(_handle, &filter, NULL, &id);
+    if(result != ERROR_SUCCESS)
+    {
+        std::cerr << "FwpmFilterAdd failed: " << getErrorString(result) << std::endl;
+        return 0;
+    }
+
+    std::cout << "Successfully created a filter with id: " << id << "\n";
+
+    return id;
+}
+
 DWORD Engine::deleteFilterById(FilterId filterId) const
 {
     return FwpmFilterDeleteById(_handle, filterId);

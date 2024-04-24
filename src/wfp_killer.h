@@ -23,6 +23,7 @@ public:
     };
 
 public:
+    void createFilter();
     void listFilters(const Options &options) const;
     void deleteFilters(const std::vector<FilterId> &filterIds) const;
     void monitor();

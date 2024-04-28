@@ -241,6 +241,21 @@ public:
         return pFilter;
     }
 
+    FWP_BYTE_BLOB* getAppIdFromFileName(const std::wstring &appPath)
+    {
+        FWP_BYTE_BLOB *pBlob{nullptr};
+
+        DWORD result = FwpmGetAppIdFromFileName(appPath.c_str(), &pBlob);
+
+        if(result != ERROR_SUCCESS)
+        {
+            std::cerr << "FwpmGetAppIdFromFileName failed: " << getErrorString(result);
+            return nullptr;
+        }
+
+        return pBlob;
+    }
+
     // Returns an owning pointer to a FWPM_SUBLAYER
     // Caller is responsible for the life-time of this object
     FWPM_SUBLAYER* getSubLayerByKey(const GUID &subLayerKey) const

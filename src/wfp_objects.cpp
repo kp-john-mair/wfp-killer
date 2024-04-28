@@ -26,14 +26,14 @@ FilterId Engine::add(const FWPM_FILTER &filter)
 {
     UINT64 id = 0;
 
-    DWORD result = FwpmFilterAdd(_handle, &filter, NULL, &id);
+    DWORD result = FwpmFilterAdd(_handle, &filter, NULL, NULL);
     if(result != ERROR_SUCCESS)
     {
         std::cerr << "FwpmFilterAdd failed: " << getErrorString(result) << std::endl;
         return 0;
     }
 
-    std::cout << "Successfully created a filter with id: " << id << "\n";
+    std::cout << "Filter added has key: " << guidToString(filter.filterKey) << " and id: " << filter.filterId << std::endl;
 
     return id;
 }

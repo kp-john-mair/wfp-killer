@@ -28,32 +28,47 @@ namespace
     using Options = WfpKiller::Options;
 }
 
+// creates a dummy conditional filter that filters on the chrome app
 void WfpKiller::createFilter()
 {
     FWPM_FILTER filter{};
 
     std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(PIA_PROVIDER_KEY)};
 
-
-    // basic setup
+    // Basic filter setup
     filter.providerKey = &PIA_PROVIDER_KEY;
     filter.subLayerKey = PIA_SUBLAYER_KEY;
     filter.flags = FWPM_FILTER_FLAG_PERSISTENT | FWPM_FILTER_FLAG_INDEXED;
     filter.weight.type = FWP_UINT8;
     filter.weight.uint8 = 5;
-
     filter.displayData = pProvider->displayData;
-
     filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
-
     filter.action.type = FWP_ACTION_PERMIT;
 
+    // Add a condition for an application id constraint
+    FWPM_FILTER_CONDITION condition{};
+    condition.fieldKey = FWPM_CONDITION_ALE_APP_ID;
+    condition.matchType = FWP_MATCH_EQUAL;
+    condition.conditionValue.type = FWP_BYTE_BLOB_TYPE;
 
-    std::cout << "trying to add new filter to engine" << std::endl;
+    filter.filterCondition = &condition;
+    filter.numFilterConditions = 1;
 
-    auto id = _engine.add(filter);
+    // Add the application byte blob
+    // Ensure we assign a wide string
+    std::wstring appPath = L"c:/program files/google/chrome/application/chrome.exe";
 
-    std::cout << "Should have created a filter: " << id << std::endl;
+    // Get the byte blob
+    std::unique_ptr<FWP_BYTE_BLOB, WfpDeleter> pBlob{_engine.getAppIdFromFileName(appPath)};
+    condition.conditionValue.byteBlob = pBlob.get();
+
+    std::cout << "Trying to add new dummy filter to engine" << std::endl;
+
+    auto id =  _engine.add(filter);
+    if(id != 0)
+    {
+        std::cout << "Should have created a filter: " << id << std::endl;
+    }
 }
 
 void WfpKiller::listFilters(const Options &options) const

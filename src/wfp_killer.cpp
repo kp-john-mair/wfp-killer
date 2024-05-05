@@ -178,6 +178,14 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
 {
     uint32_t deleteCount{0};
 
+    // Returns true if a given GUID ptr points to a PIA filter.
+    // Null provider pointers are ignored.
+    auto isPiaProvider = [&](const GUID *pProviderKey)
+    {
+        return pProviderKey && IsEqualGUID(*pProviderKey, PIA_PROVIDER_KEY);
+    };
+
+    // Delete a specific subset of filters
     if(filterIds.size() > 0)
     {
         std::cout << std::format("Will delete {} filters\n", filterIds.size());
@@ -187,17 +195,27 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
                 ++deleteCount;
         }
     }
+    // Delete ALL PIA filters
     else
     {
-        std::cout << "This action will delete ALL PIA filters\nAre you sure? (y/n)\n";
+        // Get all PIA filters
+        std::vector<std::shared_ptr<FWPM_FILTER>> piaFilters;
+         _engine.enumerateFiltersForLayers(kPiaLayers, [&](const auto &pFilter) {
+                if(isPiaProvider(pFilter->providerKey))
+                    piaFilters.push_back(pFilter);
+        });
+
+        std::cout << std::format("This action will delete ALL PIA filters\nAre you sure? (y/n) (will delete {} filters)\n", piaFilters.size());
         char userDecision{};
         std::cin >> userDecision;
         if(userDecision == 'y')
         {
-            _engine.enumerateFiltersForLayers(kPiaLayers, [&](const auto &pFilter) {
+            // Delete all PIA filters.
+            for(const auto &pFilter : piaFilters)
+            {
                 if(deleteSingleFilter(pFilter->filterId))
                     ++deleteCount;
-            });
+            }
         }
     }
 

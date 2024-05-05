@@ -26,10 +26,11 @@ void DeleteCommand::runCommand(int argc, char **argv)
         bool shouldDeleteAllFilters = std::ranges::find(filterIdStrs, "pia") != filterIdStrs.end();
 
         std::vector<wfpk::FilterId> filterIds;
-        filterIds.reserve(result.count("delete"));
+        filterIds.reserve(result.count("filter"));
 
         // Empty filterIds vector means we delete all PIA filters
         // If we shouldn't delete all - then we fill it with ids
+        //
         // TODO: Currently this just deletes ALL filters not just PIA
         // change the code so it filters based on PIA filters
         if(!shouldDeleteAllFilters)

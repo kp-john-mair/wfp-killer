@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <regex>
 
+#include "cli/commands.h"
+
 // Instruct the compiler to link these libs for us
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "fwpuclnt.lib")
@@ -28,21 +30,6 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
     }
     return FALSE;
 }
-
-// This converts a vector of strings to a vector of regex
-// Since our matchers are case insensitive, we also lowercase them here too.
-std::vector<std::regex> stringVecToMatchers(const std::vector<std::string> &vec)
-{
-    std::vector<std::regex> matchers;
-    matchers.reserve(vec.size());
-
-    for(const auto &pattern : vec)
-    {
-        matchers.emplace_back(wfpk::toLowercase(pattern));
-    }
-
-    return matchers;
-}
 }
 
 int main(int argc, char** argv)
@@ -60,11 +47,19 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    wfpk::WfpKiller g_wfpKiller;
+
+    // Use a map so we can enforce order for display purposes
+    // Only using a std::shared_ptr so can use the initializer list form of initialization
+    // which requires the elements to be copyable (and so won't work with a std::unique_ptr)
+    std::map<std::string, std::shared_ptr<wfpk::CliCommand>> CliCommands {
+        {"list", std::make_shared<wfpk::ListCommand>(&g_wfpKiller)}
+    };
+
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
 
     try
     {
-        //options.allow_unrecognised_options();
         options.add_options()
             ("h,help", "Display this help message.")
             ("l,list", "List all filters across all layers (also accepts an optional partial name match for a provider or 'all').", cxxopts::value<std::vector<std::string>>())
@@ -75,14 +70,43 @@ int main(int argc, char** argv)
             ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>())
             ("c,create", "Create a dummy filter for testing");
 
-        wfpk::WfpKiller wfpKiller;
-
         auto result = options.parse(argc, argv);
+
+        if(argc < 2)
+        {
+            std::cerr << "Options are required!";
+            return 1;
+        }
+
+        const std::string &commandName{argv[1]};
+
+        if(CliCommands.contains(commandName))
+        {
+            CliCommands[commandName]->run(argc, argv);
+            return 0;
+        }
+        else
+        {
+            std::cerr << "Unrecognized command\n";
+            return 1;
+        }
+
+        if(commandName == "list")
+        {
+            std::cout << "got a list!";
+            //wfpk::ListCommand{std::move(pWfpKiller)}.run(argc, argv);
+            return 0;
+        }
+        else
+        {
+            std::cerr << "didn't get a list!";
+            return 1;
+        }
 
         if(result.count("create"))
         {
             std::cout << "Trying to create a dummy callout filter\n";
-            wfpKiller.createFilter();
+          //  pWfpKiller->createFilter();
             return 0;
         }
 
@@ -90,29 +114,6 @@ int main(int argc, char** argv)
         {
           std::cout << options.help();
           return 0;
-        }
-        else if(result.count("list"))
-        {
-            const auto &listValues = result["list"].as<std::vector<std::string>>();
-            bool shouldShowAllFilters = std::ranges::find(listValues, "all") != listValues.end();
-
-            std::vector<std::regex> providers, subLayers;
-
-            if(!shouldShowAllFilters)
-            {
-                // We match the 'names' against both providers and subLayers
-                // so that both fields are searched
-                providers = stringVecToMatchers(listValues);
-                subLayers = providers;
-            }
-
-            const auto layers = stringVecToMatchers({result["layer"].as<std::vector<std::string>>()});
-            wfpKiller.listFilters({
-                .providerMatchers = providers,
-                .layerMatchers = layers,
-                .subLayerMatchers = subLayers
-             });
-            return 0;
         }
         else if(result.count("delete"))
         {
@@ -133,13 +134,13 @@ int main(int argc, char** argv)
                     filterIds.push_back(std::stoull(filterIdStr));
             }
 
-            wfpKiller.deleteFilters(filterIds);
+            //pWfpKiller->deleteFilters(filterIds);
 
             return 0;
         }
         else if(result.count("monitor"))
         {
-            wfpKiller.monitor();
+            //pWfpKiller->monitor();
         }
         else
         {

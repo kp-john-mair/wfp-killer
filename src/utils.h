@@ -1,13 +1,18 @@
 #pragma once
 
+#include <windows.h>
+#include <fwpmu.h>
+
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 #include <unordered_map>
+#include <map>
 #include <set>
 #include <format>
 #include <vector>
 #include <optional>
+#include <string>
 #include <memory>
 #include <ranges>
 #include <concepts>

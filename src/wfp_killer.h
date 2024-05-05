@@ -23,6 +23,11 @@ public:
     };
 
 public:
+    WfpKiller() = default;
+    WfpKiller(const WfpKiller&) = delete;
+    WfpKiller &operator=(const WfpKiller&) = delete;
+
+public:
     void createFilter();
     void listFilters(const Options &options) const;
     void deleteFilters(const std::vector<FilterId> &filterIds) const;

@@ -3,10 +3,11 @@
 #include <cli/cli_command.h>
 
 namespace wfpk {
-class ListCommand final : public CliCommand
+class DeleteCommand final : public CliCommand
 {
 public:
-    ListCommand(wfpk::WfpKiller *pWfpKiller);
+    // Non-owning pointer to a WfpKiller instance
+    DeleteCommand(wfpk::WfpKiller *pWfpKiller);
 
 private:
     virtual void runCommand(int argc, char **argv) override;

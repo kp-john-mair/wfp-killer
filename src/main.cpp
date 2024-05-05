@@ -53,7 +53,8 @@ int main(int argc, char** argv)
     // Only using a std::shared_ptr so can use the initializer list form of initialization
     // which requires the elements to be copyable (and so won't work with a std::unique_ptr)
     std::map<std::string, std::shared_ptr<wfpk::CliCommand>> CliCommands {
-        {"list", std::make_shared<wfpk::ListCommand>(&g_wfpKiller)}
+        {"list", std::make_shared<wfpk::ListCommand>(&g_wfpKiller)},
+        {"delete", std::make_shared<wfpk::DeleteCommand>(&g_wfpKiller)}
     };
 
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
@@ -79,10 +80,9 @@ int main(int argc, char** argv)
         }
 
         const std::string &commandName{argv[1]};
-
         if(CliCommands.contains(commandName))
         {
-            CliCommands[commandName]->run(argc, argv);
+            CliCommands[commandName]->run(argc - 1, argv + 1);
             return 0;
         }
         else

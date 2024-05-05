@@ -8,6 +8,7 @@ namespace wfpk {
 class CliCommand
 {
 public:
+    // Non-owning pointer to a WfpKiller instance
     CliCommand(wfpk::WfpKiller *pWfpKiller)
     : _pWfpKiller{pWfpKiller}
     {

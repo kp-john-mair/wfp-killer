@@ -54,10 +54,6 @@ void ListCommand::runCommand(int argc, char **argv)
             subLayers = providers;
             layers = stringVecToMatchers({result["search"].as<std::vector<std::string>>()});
         }
-        else
-        {
-            std::cout << "Got all options for list!\n";
-        }
 
         _pWfpKiller->listFilters({
             .providerMatchers = providers,

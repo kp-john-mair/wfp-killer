@@ -30,7 +30,21 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
     }
     return FALSE;
 }
+
+using CommandMapT = std::map<std::string, std::shared_ptr<wfpk::CliCommand>>;
+
+void showHelp(const std::string &programName, const CommandMapT &commandMap)
+{
+    std::cout << "A tool to inspect and manipulate the WFP firewall.\n\n";
+    std::cout << std::format("Usage: {} <subcommand>\n\n", programName);
+    std::cout << "Subcommands:\n";
+    for(const auto &[name, cmd] : commandMap)
+        std::cout << std::format("  {:10} {}\n", name, cmd->description());
+
+    std::cout << std::format("\nSee {} <subcommand> -h for detailed help.\n", programName);
 }
+}
+
 
 int main(int argc, char** argv)
 {
@@ -47,40 +61,39 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    wfpk::WfpKiller g_wfpKiller;
+    wfpk::WfpKiller wfpKiller;
 
     // Use a map so we can enforce order for display purposes
     // Only using a std::shared_ptr so can use the initializer list form of initialization
     // which requires the elements to be copyable (and so won't work with a std::unique_ptr)
-    std::map<std::string, std::shared_ptr<wfpk::CliCommand>> CliCommands {
-        {"list", std::make_shared<wfpk::ListCommand>(&g_wfpKiller)},
-        {"delete", std::make_shared<wfpk::DeleteCommand>(&g_wfpKiller)}
+    CommandMapT CliCommands {
+        {"list", std::make_shared<wfpk::ListCommand>(&wfpKiller)},
+        {"delete", std::make_shared<wfpk::DeleteCommand>(&wfpKiller)},
+        {"create", std::make_shared<wfpk::CreateCommand>(&wfpKiller)},
+        {"monitor", std::make_shared<wfpk::MonitorCommand>(&wfpKiller)}
     };
 
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
 
     try
     {
-        // options.add_options()
-        //     ("h,help", "Display this help message.")
-        //     ("l,list", "List all filters across all layers (also accepts an optional partial name match for a provider or 'all').", cxxopts::value<std::vector<std::string>>())
-        //     ("m,monitor", "Monitor WFP events.")
-        //     ("p,provider", "Limit output to a specific provider (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
-        //     ("L,layer", "Limit output to a specific layer (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
-        //     ("s,sublayer", "Limit output to a specified sublayer (accepts partial name match).", cxxopts::value<std::vector<std::string>>()->default_value({}))
-        //     ("d,delete", "Delete a filter or all filters (takes a filter ID or 'all').", cxxopts::value<std::vector<std::string>>())
-        //     ("c,create", "Create a dummy filter for testing");
-
-        // auto result = options.parse(argc, argv);
-
         if(argc < 2)
         {
             std::cerr << "Options are required!";
             return 1;
         }
 
+        // Extract out just the filename for the process (not the full path)
+        const std::string &programName{std::filesystem::path{argv[0]}.filename().string()};
+        // Name of command (not program name)
         const std::string &commandName{argv[1]};
-        if(CliCommands.contains(commandName))
+
+        if(commandName == "-h" || commandName == "help")
+        {
+            showHelp(programName, CliCommands);
+            return 0;
+        }
+        else if(CliCommands.contains(commandName))
         {
             CliCommands[commandName]->run(argc - 1, argv + 1);
             return 0;
@@ -90,52 +103,6 @@ int main(int argc, char** argv)
             std::cerr << "Unrecognized command\n";
             return 1;
         }
-
-        // if(result.count("create"))
-        // {
-        //     std::cout << "Trying to create a dummy callout filter\n";
-        //   //  pWfpKiller->createFilter();
-        //     return 0;
-        // }
-
-        // else if(result.count("help"))
-        // {
-        //   std::cout << options.help();
-        //   return 0;
-        // }
-        // else if(result.count("delete"))
-        // {
-        //     const auto &filterIdStrs = result["delete"].as<std::vector<std::string>>();
-
-        //     // Whether we should delete all filters (did the user pass in '-d all' ?)
-        //     bool shouldDeleteAllFilters = std::ranges::find(filterIdStrs, "all") != filterIdStrs.end();
-
-        //     std::vector<wfpk::FilterId> filterIds;
-        //     filterIds.reserve(result.count("delete"));
-
-        //     // Empty filterIds vector means we delete all filters
-        //     // If we shouldn't delete all - then we fill it with ids
-        //     if(!shouldDeleteAllFilters)
-        //     {
-        //         filterIds.reserve(filterIdStrs.size());
-        //         for(const auto &filterIdStr : filterIdStrs)
-        //             filterIds.push_back(std::stoull(filterIdStr));
-        //     }
-
-        //     //pWfpKiller->deleteFilters(filterIds);
-
-        //     return 0;
-        // }
-        // else if(result.count("monitor"))
-        // {
-        //     //pWfpKiller->monitor();
-        // }
-        // else
-        // {
-        //     std::cout << "Options are required.\n\n";
-        //     std::cout << options.help();
-        //     return 1;
-        // }
     }
     catch(const wfpk::WfpError& ex)
     {

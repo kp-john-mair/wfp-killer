@@ -1409,6 +1409,9 @@ namespace cxxopts
     {
     }
 
+    // Added by John Mair
+    const String &description() const { return m_help_string; }
+
     Options&
     positional_help(std::string help_text)
     {

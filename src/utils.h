@@ -18,6 +18,7 @@
 #include <concepts>
 #include <guiddef.h>
 #include <assert.h>
+#include <filesystem>
 
 // Allow GUID to be used as a key in a hash
 template <>

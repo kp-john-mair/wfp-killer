@@ -23,6 +23,7 @@ public:
 public:
     void run(int argc, char **argv) { runCommand(argc, argv); }
     std::string help() const { return _pOptions ? _pOptions->help() : ""; }
+    std::string description() const { return _pOptions ? _pOptions->description() : ""; }
 
 private:
     // NVI idiom

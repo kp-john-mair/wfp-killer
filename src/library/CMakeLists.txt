@@ -9,4 +9,3 @@ add_library(wfpklib STATIC ${SOURCES})
 # Add the include directory
 target_include_directories(wfpklib PUBLIC .)
 target_include_directories(wfpklib PUBLIC ../../vendor/cxxopts/include)
-

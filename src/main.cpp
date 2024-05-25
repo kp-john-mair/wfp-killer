@@ -75,19 +75,21 @@ int main(int argc, char** argv)
 
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};
 
+    // Extract out just the filename for the process (not the full path)
+    const std::string programName{std::filesystem::path{argv[0]}.filename().string()};
+
+    // Show help if user doesn't provide any options
+    if(argc < 2)
+    {
+        showHelp(programName, CliCommands);
+        return 0;
+    }
+
+    // Name of command (not program name)
+    const std::string commandName{argv[1]};
+
     try
     {
-        if(argc < 2)
-        {
-            std::cerr << "Options are required!";
-            return 1;
-        }
-
-        // Extract out just the filename for the process (not the full path)
-        const std::string &programName{std::filesystem::path{argv[0]}.filename().string()};
-        // Name of command (not program name)
-        const std::string &commandName{argv[1]};
-
         if(commandName == "-h" || commandName == "help")
         {
             showHelp(programName, CliCommands);
@@ -95,7 +97,8 @@ int main(int argc, char** argv)
         }
         else if(CliCommands.contains(commandName))
         {
-            CliCommands[commandName]->run(argc - 1, argv + 1);
+            const auto &command = CliCommands[commandName];
+            command->run(argc - 1, argv + 1);
             return 0;
         }
         else

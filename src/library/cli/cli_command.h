@@ -1,6 +1,5 @@
 #pragma once
 
-#include <utils.h>
 #include <wfp_killer.h>
 #include <cxxopts.h>
 

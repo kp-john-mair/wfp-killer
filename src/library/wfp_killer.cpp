@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <regex>
 #include <string>
-#include <windows.h>
 #include <stdlib.h>
 #include "wfp_killer.h"
 #include "wfp_ostream_helpers.h"
 #include "wfp_name_mapper.h"
+// We only need a minimal windows.h
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 namespace wfpk {
 

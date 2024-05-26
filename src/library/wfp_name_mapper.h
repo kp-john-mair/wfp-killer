@@ -1,5 +1,4 @@
 #pragma once
-#include <windows.h>
 #include <fwpmu.h>
 #include <string>
 

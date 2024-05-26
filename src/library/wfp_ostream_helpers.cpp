@@ -1,6 +1,7 @@
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
+#include "utils.h"
 #include <iomanip>
 #include <algorithm>
 #include <format>
@@ -10,7 +11,6 @@
 #include "wfp_name_mapper.h"
 #include "wfp_objects.h"
 #include <fwpmu.h>
-#include "utils.h"
 
 namespace wfpk {
 

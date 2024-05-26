@@ -1,8 +1,7 @@
 #pragma once
 
-#include <windows.h>
+#include <guiddef.h>
 #include <fwpmu.h>
-
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -16,7 +15,6 @@
 #include <memory>
 #include <ranges>
 #include <concepts>
-#include <guiddef.h>
 #include <assert.h>
 #include <filesystem>
 

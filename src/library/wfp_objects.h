@@ -1,16 +1,14 @@
 #pragma once
 
-#include <windows.h>
+#include <utils.h>
 #include <stdexcept>
 #include <iostream>
 #include <vector>
 #include <set>
 #include <memory>
 #include <optional>
-#include <fwpmu.h>
 #include <concepts>
 #include <source_location>
-#include "utils.h"
 
 namespace wfpk {
 // Convenient alias for a Filter ID

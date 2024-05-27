@@ -15,7 +15,11 @@ namespace wfpk {
 
 namespace
 {
-    const std::vector kPiaLayers = {
+    // The layers we care about in wfpk - there's many more layers than this
+    // but these are the ones we're interested in for now.
+    const std::vector kLayers = {
+        FWPM_LAYER_OUTBOUND_TRANSPORT_V4,
+        FWPM_LAYER_OUTBOUND_TRANSPORT_V6,
         FWPM_LAYER_ALE_AUTH_CONNECT_V4,
         FWPM_LAYER_ALE_AUTH_CONNECT_V6,
         FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4,
@@ -77,7 +81,7 @@ void WfpKiller::listFilters(const Options &options) const
 {
     size_t filterCount{0};
 
-    for(const auto &layerKey : kPiaLayers)
+    for(const auto &layerKey : kLayers)
     {
         const auto &filters = _engine.filtersForLayer(layerKey);
 
@@ -202,7 +206,7 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
     {
         // Get all PIA filters
         std::vector<std::shared_ptr<FWPM_FILTER>> piaFilters;
-         _engine.enumerateFiltersForLayers(kPiaLayers, [&](const auto &pFilter) {
+         _engine.enumerateFiltersForLayers(kLayers, [&](const auto &pFilter) {
                 if(isPiaProvider(pFilter->providerKey))
                     piaFilters.push_back(pFilter);
         });

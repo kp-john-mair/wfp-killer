@@ -1,9 +1,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "wfp_name_mapper.h"
+#include <wfp_name_mapper.h>
 #include <unordered_map>
 #include <iostream>
-#include "utils.h"
+#include <utils.h>
 
 namespace wfpk {
 namespace

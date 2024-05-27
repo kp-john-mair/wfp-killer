@@ -119,14 +119,26 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     case FWP_UINT8:
         os << static_cast<UINT32>(condition.conditionValue.uint8);
         break;
+    case FWP_INT8:
+        os << static_cast<INT32>(condition.conditionValue.int8);
+        break;
     case FWP_UINT16:
         os << static_cast<UINT32>(condition.conditionValue.uint16);
+        break;
+    case FWP_INT16:
+        os << static_cast<INT32>(condition.conditionValue.int16);
         break;
     case FWP_UINT32:
         os << static_cast<UINT32>(condition.conditionValue.uint32);
         break;
+    case FWP_INT32:
+        os << static_cast<INT32>(condition.conditionValue.int32);
+        break;
     case FWP_UINT64:
         os << *condition.conditionValue.uint64;
+        break;
+    case FWP_INT64:
+        os << *condition.conditionValue.int64;
         break;
     case FWP_BYTE_BLOB_TYPE:
     {

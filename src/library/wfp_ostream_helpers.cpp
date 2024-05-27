@@ -167,7 +167,7 @@ std::ostream& operator<<(std::ostream& os, const FWPM_FILTER_CONDITION& conditio
     }
 
     default:
-        os << "unknown";
+        os << std::format("unknown (type: {})", static_cast<INT32>(condition.conditionValue.type));
     }
 
     os << ">";

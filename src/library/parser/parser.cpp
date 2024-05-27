@@ -1,4 +1,5 @@
 #include <utils.h>
+#include <regex>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -26,7 +27,8 @@ enum class TokenType
     Udp,
     IpAddress,
     Ipv4,
-    Ipv6
+    Ipv6,
+    Comma
 };
 
 // Represents a token
@@ -69,8 +71,8 @@ const std::unordered_map<TokenType, std::string> tokenMap = {
 const std::vector<Lexeme> keywords = {
     { .tokenType = TokenType::BlockAction, .tokenName = "BlockAction", .lexeme = "block" },
     { .tokenType = TokenType::PermitAction, .tokenName = "PermitAction", .lexeme = "permit" },
-    { .tokenType = TokenType::LBrack, .tokenName = "LBrack", .lexeme = "block" },
-    { .tokenType = TokenType::RBrack, .tokenName = "RBrack", .lexeme = "permit" },
+    { .tokenType = TokenType::LBrack, .tokenName = "LBrack", .lexeme = "{" },
+    { .tokenType = TokenType::RBrack, .tokenName = "RBrack", .lexeme = "}" },
     { .tokenType = TokenType::InDir, .tokenName = "InDir", .lexeme = "in" },
     { .tokenType = TokenType::OutDir, .tokenName = "OutDir", .lexeme = "out" },
     { .tokenType = TokenType::Port, .tokenName = "Port", .lexeme = "port" },
@@ -81,6 +83,7 @@ const std::vector<Lexeme> keywords = {
     { .tokenType = TokenType::Udp, .tokenName = "Udp", .lexeme = "udp" },
     { .tokenType = TokenType::Ipv4, .tokenName = "Ipv4", .lexeme = "inet" },
     { .tokenType = TokenType::Ipv6, .tokenName = "Ipv6", .lexeme = "inet6" },
+    { .tokenType = TokenType::Comma, .tokenName = "Comma", .lexeme = "," },
 };
 
 // Custom error that represents a parsing/lexing failure
@@ -93,6 +96,10 @@ public:
 // The Lexer is responsible for breaking up a string of text into tokens
 class Lexer
 {
+    inline static std::regex ipv4Regex{std::string{R"(^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
+                          "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
+                          "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
+                          "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)"}};
 public:
     explicit Lexer(const std::string &input)
         : _input{input}, _currentIndex{0}
@@ -120,8 +127,9 @@ private:
     }
 
     Token string();
-
+    Token ipAddressOrNumber();
     void skipWhitespace();
+    char peek() const { return _input[_currentIndex]; }
 
 private:
     std::string _input;
@@ -132,7 +140,7 @@ Token Lexer::string()
 {
     ++_currentIndex;
     size_t start = _currentIndex;
-    while(_currentIndex < _input.length() && _input[_currentIndex] != '"')
+    while(_currentIndex < _input.length() && peek() != '"')
         ++_currentIndex;
 
     std::string content = _input.substr(start, _currentIndex - start);
@@ -143,6 +151,22 @@ Token Lexer::string()
     return {TokenType::String, content};
 }
 
+Token Lexer::ipAddressOrNumber()
+{
+    size_t start = _currentIndex;
+    while(_currentIndex < _input.length() && (isdigit(peek()) || peek() == '.'))
+            ++_currentIndex;
+
+    std::string content = _input.substr(start, _currentIndex - start);
+
+    if(std::regex_match(content, ipv4Regex))
+        return {TokenType::IpAddress, content};
+    else if(std::ranges::all_of(content, isdigit))
+        return {TokenType::Number, content};
+
+    throw ParseError{std::format("Invalid token: got {} - not a number or an ipv4 address!", content)};
+}
+
 void Lexer::skipWhitespace()
 {
     // Eat up all whitespace between lexemes
@@ -150,25 +174,34 @@ void Lexer::skipWhitespace()
         ++_currentIndex;
 }
 
-
 Token Lexer::nextToken() {
     // End of input
     if(_currentIndex >= _input.length())
         return {TokenType::EndOfInput, "EOF"};
 
     skipWhitespace();
-    std::optional<Lexeme> terminal = matchTerminal();
-    if(terminal)
+
+    std::optional<Lexeme> keyword = matchTerminal();
+    if(keyword)
     {
-        _currentIndex += terminal->length();
-        return {terminal->tokenType, terminal->lexeme};
+        _currentIndex += keyword->length();
+        return {keyword->tokenType, keyword->lexeme};
     }
 
-    switch(_input[_currentIndex])
+    const auto lookahead = peek();
+
+    switch(lookahead)
     {
     case '"':
     {
        return string();
+    }
+    default:
+    {
+        if(isdigit(lookahead))
+            return ipAddressOrNumber();
+
+        throw ParseError{std::format("Unrecognized symbol: '{}'!", lookahead)};
     }
     }
 }

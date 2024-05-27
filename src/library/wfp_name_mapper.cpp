@@ -12,6 +12,8 @@ namespace
 
     const std::unordered_map<GUID, WfpName> kGuidWfpNameMap {
         // Layer names, see full list here: https://learn.microsoft.com/en-us/windows/win32/fwp/management-filtering-layer-identifiers-
+        WFP_NAME(FWPM_LAYER_OUTBOUND_TRANSPORT_V4, "[Ipv4 outbound_transport]"),
+        WFP_NAME(FWPM_LAYER_OUTBOUND_TRANSPORT_V6, "[Ipv6 outbound_transport]"),
         WFP_NAME(FWPM_LAYER_ALE_AUTH_CONNECT_V4, "[Ipv4 outbound]"),
         WFP_NAME(FWPM_LAYER_ALE_AUTH_CONNECT_V6, "[Ipv6 outbound]"),
         WFP_NAME(FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4, "[Ipv4 inbound]"),

@@ -9,8 +9,6 @@ FetchContent_MakeAvailable(googletest)
 add_library(GTest::GTest INTERFACE IMPORTED)
 target_link_libraries(GTest::GTest INTERFACE gtest_main)
 
-add_executable(foo_test foo_test.cpp)
-
-target_link_libraries(foo_test PRIVATE GTest::GTest wfpklib)
-
-add_test(foo_gtests foo_test)
+add_executable(lexer_test lexer_test.cpp)
+target_link_libraries(lexer_test PRIVATE GTest::GTest wfpklib)
+add_test(lexer_gtests lexer_test)

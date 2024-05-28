@@ -140,8 +140,6 @@ Token Lexer::nextToken() {
 
     skipWhitespace();
 
-    std::cout << "current char is: " << peek() << "\n";
-
     std::optional<Lexeme> keyword = matchTerminal();
     if(keyword)
     {

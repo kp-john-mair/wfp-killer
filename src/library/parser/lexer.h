@@ -38,6 +38,12 @@ struct Token
     // Useful string representation of the token for
     // tracing purposes.
     std::string description() const;
+
+    // comparison
+    auto operator<=>(const Token &other) const
+    {
+        return type == other.type;
+    }
 };
 
 // The Lexer is responsible for breaking up a string of text into tokens

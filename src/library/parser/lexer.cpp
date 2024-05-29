@@ -37,8 +37,8 @@ const std::unordered_map<TokenType, std::string> tokenMap = {
     {TokenType::Tcp, "Tcp"},
     {TokenType::Udp, "Udp"},
     {TokenType::IpAddress, "IpAddress"},
-    {TokenType::Ipv4, "inet"},
     {TokenType::Ipv6, "inet6"},
+    {TokenType::Ipv4, "inet"}
 };
 
 const std::vector<Lexeme> keywords = {
@@ -46,8 +46,8 @@ const std::vector<Lexeme> keywords = {
     { .tokenType = TokenType::PermitAction, .tokenName = "PermitAction", .lexeme = "permit" },
     { .tokenType = TokenType::LBrack, .tokenName = "LBrack", .lexeme = "{" },
     { .tokenType = TokenType::RBrack, .tokenName = "RBrack", .lexeme = "}" },
-    { .tokenType = TokenType::Ipv4, .tokenName = "Ipv4", .lexeme = "inet" },
     { .tokenType = TokenType::Ipv6, .tokenName = "Ipv6", .lexeme = "inet6" },
+    { .tokenType = TokenType::Ipv4, .tokenName = "Ipv4", .lexeme = "inet" },
     { .tokenType = TokenType::InDir, .tokenName = "InDir", .lexeme = "in" },
     { .tokenType = TokenType::OutDir, .tokenName = "OutDir", .lexeme = "out" },
     { .tokenType = TokenType::Port, .tokenName = "Port", .lexeme = "port" },
@@ -59,10 +59,7 @@ const std::vector<Lexeme> keywords = {
     { .tokenType = TokenType::Comma, .tokenName = "Comma", .lexeme = "," }
 };
 
-static const std::regex ipv4Regex{std::string{R"(^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
-                                               "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
-                                               "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
-                                               "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)"}};
+   static const std::regex ipv4Regex(R"(^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$)");
 }
 
 std::string Token::description() const
@@ -123,7 +120,7 @@ Token Lexer::ipAddressOrNumber()
     else if(std::ranges::all_of(content, isdigit))
         return {TokenType::Number, content};
 
-    throw ParseError{std::format("Invalid token: got {} - not a number or an ipv4 address!", content)};
+        throw ParseError{std::format("Invalid token: got {} - not a number or an ipv4 address!", content)};
 }
 
 void Lexer::skipWhitespace()
@@ -131,6 +128,15 @@ void Lexer::skipWhitespace()
     // Eat up all whitespace between lexemes
     while(_currentIndex < _input.length() && std::isspace(_input[_currentIndex]))
         ++_currentIndex;
+}
+
+std::vector<Token> Lexer::allTokens()
+{
+    std::vector<Token> tokens;
+    for(Token token = nextToken(); token.type != TokenType::EndOfInput; token = nextToken())
+        tokens.push_back(token);
+
+    return tokens;
 }
 
 Token Lexer::nextToken() {
@@ -151,6 +157,11 @@ Token Lexer::nextToken() {
 
     switch(lookahead)
     {
+    // Special handling of null byte - if there's whitespace at the end of the input
+    // then skipWhitespace will go right to the last char, meaning the next char will be
+    // the null byte
+    case '\0':
+        return {TokenType::EndOfInput, ""};
     case '"':
     {
        return string();

@@ -40,10 +40,7 @@ struct Token
     std::string description() const;
 
     // comparison
-    auto operator<=>(const Token &other) const
-    {
-        return type == other.type;
-    }
+    auto operator<=>(const Token &other) const = default;
 };
 
 // The Lexer is responsible for breaking up a string of text into tokens
@@ -57,6 +54,8 @@ public:
 
     // Return the next available token from the input
     Token nextToken();
+    // Return all tokens at once (primarily useful for tests)
+    std::vector<Token> allTokens();
 
 private:
     // Check if a lexeme was matched, i.e matchTerminal(LBrackText) will return true if

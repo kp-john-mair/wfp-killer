@@ -9,6 +9,9 @@
 #include <magic_enum.h>
 
 namespace wfpk {
+// Keywords are simple lexemes with static content.
+// Numbers (and Strings) are NOT keywords as they could be
+// anything, i.e 53 or "hello", etc
 struct Keyword
 {
     TokenType tokenType{};
@@ -18,8 +21,6 @@ struct Keyword
 };
 
 namespace {
-// Keywords are simple lexemes with static content.
-// Numbers (and Strings) are NOT keywords as they could be anything, i.e 53 or "hello", etc
 const std::vector<Keyword> keywords = {
     { .tokenType = TokenType::BlockAction, .lexeme = "block" },
     { .tokenType = TokenType::PermitAction, .lexeme = "permit" },

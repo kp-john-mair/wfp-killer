@@ -54,13 +54,6 @@ std::string Token::description() const
         return std::format("{}({})", name, text);
 }
 
-// Custom error that represents a parsing/lexing failure
-class ParseError : public std::runtime_error {
-public:
-    explicit ParseError(const std::string &reason)
-        : std::runtime_error(reason) {}
-};
-
  auto Lexer::maybeKeyword() -> std::optional<Token>
 {
     auto itKeyword = std::find_if(keywords.begin(), keywords.end(),

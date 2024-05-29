@@ -3,6 +3,13 @@
 #include <utils.h>
 
 namespace wfpk {
+// Custom error that represents a parsing/lexing failure
+class ParseError : public std::runtime_error {
+public:
+    explicit ParseError(const std::string &reason)
+        : std::runtime_error(reason) {}
+};
+
 // Forward declaration
 struct Keyword;
 

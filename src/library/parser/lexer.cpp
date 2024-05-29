@@ -9,34 +9,39 @@
 #include <magic_enum.h>
 
 namespace wfpk {
-struct Lexeme
+struct Keyword
 {
     TokenType tokenType{};
-    std::string tokenName;
     std::string lexeme;
 
     size_t length() const { return lexeme.length(); }
 };
 
 namespace {
-const std::vector<Lexeme> keywords = {
-    { .tokenType = TokenType::BlockAction, .tokenName = "BlockAction", .lexeme = "block" },
-    { .tokenType = TokenType::PermitAction, .tokenName = "PermitAction", .lexeme = "permit" },
-    { .tokenType = TokenType::LBrack, .tokenName = "LBrack", .lexeme = "{" },
-    { .tokenType = TokenType::RBrack, .tokenName = "RBrack", .lexeme = "}" },
-    { .tokenType = TokenType::Ipv6, .tokenName = "Ipv6", .lexeme = "inet6" },
-    { .tokenType = TokenType::Ipv4, .tokenName = "Ipv4", .lexeme = "inet" },
-    { .tokenType = TokenType::InDir, .tokenName = "InDir", .lexeme = "in" },
-    { .tokenType = TokenType::OutDir, .tokenName = "OutDir", .lexeme = "out" },
-    { .tokenType = TokenType::Port, .tokenName = "Port", .lexeme = "port" },
-    { .tokenType = TokenType::Proto, .tokenName = "Proto", .lexeme = "proto" },
-    { .tokenType = TokenType::From, .tokenName = "From", .lexeme = "from" },
-    { .tokenType = TokenType::To, .tokenName = "To", .lexeme = "to" },
-    { .tokenType = TokenType::Tcp, .tokenName = "Tcp", .lexeme = "tcp" },
-    { .tokenType = TokenType::Udp, .tokenName = "Udp", .lexeme = "udp" },
-    { .tokenType = TokenType::Comma, .tokenName = "Comma", .lexeme = "," }
+// Keywords are simple lexemes with static content.
+// Numbers (and Strings) are NOT keywords as they could be anything, i.e 53 or "hello", etc
+const std::vector<Keyword> keywords = {
+    { .tokenType = TokenType::BlockAction, .lexeme = "block" },
+    { .tokenType = TokenType::PermitAction, .lexeme = "permit" },
+    { .tokenType = TokenType::LBrack, .lexeme = "{" },
+    { .tokenType = TokenType::RBrack, .lexeme = "}" },
+    // Longer lexemes (that share a prefix with smaller lexemes) need to appear first -
+    // so 'inet6' before 'inet' and inet before 'in'
+    // otherwise the longer lexemes will never be matched.
+    { .tokenType = TokenType::Ipv6, .lexeme = "inet6" },
+    { .tokenType = TokenType::Ipv4, .lexeme = "inet" },
+    { .tokenType = TokenType::InDir, .lexeme = "in" },
+    { .tokenType = TokenType::OutDir, .lexeme = "out" },
+    { .tokenType = TokenType::Port, .lexeme = "port" },
+    { .tokenType = TokenType::Proto, .lexeme = "proto" },
+    { .tokenType = TokenType::From, .lexeme = "from" },
+    { .tokenType = TokenType::To, .lexeme = "to" },
+    { .tokenType = TokenType::Tcp, .lexeme = "tcp" },
+    { .tokenType = TokenType::Udp, .lexeme = "udp" },
+    { .tokenType = TokenType::Comma, .lexeme = "," }
 };
 
+   // Our regex matcher
    static const std::regex ipv4Regex(R"(^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$)");
 }
 
@@ -56,23 +61,31 @@ public:
         : std::runtime_error(reason) {}
 };
 
-std::optional<Lexeme> Lexer::matchTerminal()
+ auto Lexer::maybeKeyword() -> std::optional<Token>
 {
-    auto itLexeme = std::find_if(keywords.begin(), keywords.end(),
+    auto itKeyword = std::find_if(keywords.begin(), keywords.end(),
         [&](const auto &terminal)
         {
             return _input.compare(_currentIndex, terminal.length(), terminal.lexeme) == 0;
         });
 
-    if(itLexeme == keywords.end())
+    // A keyword match was found
+    if(itKeyword != keywords.end())
+    {
+        // Increment index by lexeme length
+        _currentIndex += itKeyword->length();
+        // Create a token for the lexeme and return it
+        return Token{itKeyword->tokenType, itKeyword->lexeme};
+    }
+    else
+    {
         return {};
-
-    return *itLexeme;
+    }
 }
 
 Token Lexer::string()
 {
-    ++_currentIndex;
+    ++_currentIndex; // skip over initial ""
     size_t start = _currentIndex;
     while(_currentIndex < _input.length() && peek() != '"')
         ++_currentIndex;
@@ -89,7 +102,7 @@ Token Lexer::ipAddressOrNumber()
 {
     size_t start = _currentIndex;
     while(_currentIndex < _input.length() && (isdigit(peek()) || peek() == '.'))
-            ++_currentIndex;
+        ++_currentIndex;
 
     std::string content = _input.substr(start, _currentIndex - start);
 
@@ -98,7 +111,7 @@ Token Lexer::ipAddressOrNumber()
     else if(std::ranges::all_of(content, isdigit))
         return {TokenType::Number, content};
 
-        throw ParseError{std::format("Invalid token: got {} - not a number or an ipv4 address!", content)};
+    throw ParseError{std::format("Invalid token: got {} - not a number or an ipv4 address!", content)};
 }
 
 void Lexer::skipWhitespace()
@@ -118,37 +131,36 @@ std::vector<Token> Lexer::allTokens()
 }
 
 Token Lexer::nextToken() {
+    static const Token EndOfInputToken{TokenType::EndOfInput, "EOF"};
+
     // End of input
     if(_currentIndex >= _input.length())
-        return {TokenType::EndOfInput, "EOF"};
+        return EndOfInputToken;
 
+    // Eat up spaces, tabs, newlines
     skipWhitespace();
 
-    std::optional<Lexeme> keyword = matchTerminal();
-    if(keyword)
-    {
-        _currentIndex += keyword->length();
-        return {keyword->tokenType, keyword->lexeme};
-    }
-
     const auto lookahead = peek();
-
     switch(lookahead)
     {
     // Special handling of null byte - if there's whitespace at the end of the input
     // then skipWhitespace will go right to the last char, meaning the next char will be
     // the null byte
     case '\0':
-        return {TokenType::EndOfInput, ""};
+        return EndOfInputToken;
     case '"':
-    {
        return string();
-    }
     default:
     {
-        if(isdigit(lookahead))
+        // Look for keywords
+        std::optional<Token> pKeyword = maybeKeyword();
+        if(pKeyword)
+            return *pKeyword;
+        // Tokens that start with a digit
+        else if(isdigit(lookahead))
             return ipAddressOrNumber();
 
+        // Anythine else - not supported.
         throw ParseError{std::format("Unrecognized symbol: '{}'!", lookahead)};
     }
     }

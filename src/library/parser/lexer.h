@@ -4,7 +4,7 @@
 
 namespace wfpk {
 // Forward declaration
-struct Lexeme;
+struct Keyword;
 
 enum class TokenType : uint32_t
 {
@@ -58,9 +58,9 @@ public:
     std::vector<Token> allTokens();
 
 private:
-    // Check if a lexeme was matched, i.e matchTerminal(LBrackText) will return true if
-    // "{" appears next in the input stream.
-    std::optional<Lexeme> matchTerminal();
+    // Check if a keyword lexeme was matched, i.e maybeKeyword() will return a Token
+    // if a keyword appears next in the input stream, otherwise it returns an empty optional.
+    auto maybeKeyword() -> std::optional<Token>;
 
     Token string();
     Token ipAddressOrNumber();

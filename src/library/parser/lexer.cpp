@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <optional>
 #include <parser/lexer.h>
+#include <magic_enum.h>
 
 namespace wfpk {
 struct Lexeme
@@ -18,29 +19,6 @@ struct Lexeme
 };
 
 namespace {
-// Enum class for token types
-
-// Associate the name of token with the token type
-const std::unordered_map<TokenType, std::string> tokenMap = {
-    {TokenType::BlockAction, "BlockAction"},
-    {TokenType::PermitAction, "PermitAction"},
-    {TokenType::LBrack, "LBRACK"},
-    {TokenType::RBrack, "RBRACK"},
-    {TokenType::InDir, "InDir"},
-    {TokenType::OutDir, "OutDir"},
-    {TokenType::Port, "Port"},
-    {TokenType::Proto, "Proto"},
-    {TokenType::String, "String"},
-    {TokenType::Number, "Number"},
-    {TokenType::From, "From"},
-    {TokenType::To, "To"},
-    {TokenType::Tcp, "Tcp"},
-    {TokenType::Udp, "Udp"},
-    {TokenType::IpAddress, "IpAddress"},
-    {TokenType::Ipv6, "inet6"},
-    {TokenType::Ipv4, "inet"}
-};
-
 const std::vector<Lexeme> keywords = {
     { .tokenType = TokenType::BlockAction, .tokenName = "BlockAction", .lexeme = "block" },
     { .tokenType = TokenType::PermitAction, .tokenName = "PermitAction", .lexeme = "permit" },
@@ -64,7 +42,7 @@ const std::vector<Lexeme> keywords = {
 
 std::string Token::description() const
 {
-    const std::string name = tokenMap.at(type);
+    const std::string name{magic_enum::enum_name(type)};
     if(text.empty())
         return name;
     else

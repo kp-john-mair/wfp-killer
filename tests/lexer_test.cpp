@@ -6,7 +6,7 @@ TEST(LexerTests, TestBasicLexing)
     using namespace wfpk;
     using enum TokenType;
 
-    std::string input = R"(permit    out     inet from "baby")";
+    std::string input = R"(permit out inet proto {tcp, udp} from "baby")";
 
     Lexer lexer{input};
 
@@ -14,7 +14,10 @@ TEST(LexerTests, TestBasicLexing)
     for(Token token = lexer.nextToken(); token.type != EndOfInput; token = lexer.nextToken())
         actual.push_back(token.type);
 
-    std::vector<wfpk::TokenType> expected = {PermitAction, OutDir, Ipv4, From, String};
+    std::vector<wfpk::TokenType> expected = {
+        PermitAction, OutDir, Ipv4, Proto, LBrack,
+        Tcp, Comma, Udp, RBrack, From, String
+    };
 
     ASSERT_EQ(actual, expected);
 }

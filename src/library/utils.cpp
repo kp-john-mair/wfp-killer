@@ -1,7 +1,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <fwpmu.h>
-#include "utils.h"
+#include <utils.h>
 
 namespace wfpk {
 std::string ipToString(UINT32 ipAddress)
@@ -10,6 +10,18 @@ std::string ipToString(UINT32 ipAddress)
     InetNtopA(AF_INET, &ipAddress, str, INET_ADDRSTRLEN);
 
     return std::string{str};
+}
+
+bool isIpv4(const std::string &ipAddress)
+{
+    struct in_addr ipv4Addr;
+    return InetPtonA(AF_INET, ipAddress.c_str(), &ipv4Addr) == 1;
+}
+
+bool isIpv6(const std::string &ipAddress)
+{
+    struct in6_addr ipv6Addr;
+    return InetPtonA(AF_INET6, ipAddress.c_str(), &ipv6Addr) == 1;
 }
 
 std::string ipToString(const UINT8 (&ipAddress)[16])

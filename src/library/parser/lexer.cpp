@@ -148,15 +148,17 @@ Token Lexer::nextToken() {
         if(pKeyword)
             return *pKeyword;
 
-        std::string ident = identifierString();
+        const std::string ident = identifierString();
 
-        if(std::regex_match(ident, ipv4Regex))
-            return {TokenType::IpAddress, ident};
+        if(isIpv6(ident))
+            return {TokenType::Ipv6Address, ident};
+        else if(isIpv4(ident))
+            return {TokenType::Ipv4Address, ident};
         else if(std::ranges::all_of(ident, isdigit))
             return {TokenType::Number, ident};
 
         // Anything else - not supported.
-        throw ParseError{std::format("Unrecognized symbol: '{}'!", lookahead)};
+        throw ParseError{std::format("Unrecognized identifier: '{}'!", ident)};
     }
     }
 }

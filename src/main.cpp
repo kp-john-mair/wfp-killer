@@ -11,12 +11,6 @@
 
 #include "cli/commands.h"
 
-// Instruct the compiler to link these libs for us
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "fwpuclnt.lib")
-#pragma comment(lib, "Shell32.lib")
-#pragma comment(lib, "Rpcrt4.lib")
-
 namespace {
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)

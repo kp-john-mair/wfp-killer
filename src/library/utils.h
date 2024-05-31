@@ -58,6 +58,11 @@ std::string toLowercase(const std::string& input);
 
 std::string getErrorString(DWORD errorCode);
 
+// Validate a string contains an ipv4 address
+bool isIpv4(const std::string &ipAddress);
+// Validate a string contains an ipv6 address
+bool isIpv6(const std::string &ipAddress);
+
 // void fwpConditionValueHandler(const FWP_CONDITION_VALUE &value, auto handlerFunc)
 // {
 //     switch(value.type)

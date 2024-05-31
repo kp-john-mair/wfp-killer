@@ -30,7 +30,7 @@ TEST(LexerTests, TestAllTokens)
 
     std::vector expected = {
         PermitAction, BlockAction, OutDir, InDir, Ipv4, Ipv6, Proto, LBrack,
-        Tcp, Comma, Udp, RBrack, From, String, Port, Number, IpAddress
+        Tcp, Comma, Udp, RBrack, From, String, Port, Number, Ipv4Address
     };
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
@@ -75,13 +75,27 @@ TEST(LexerTests, TestString)
     ASSERT_EQ(actual, expected);
 }
 
-TEST(LexerTests, TestIpAddress)
+TEST(LexerTests, TestIp4Address)
 {
     std::string input = "1.1.1.1";
 
     Lexer lexer{input};
     Token actual = lexer.nextToken();
-    Token expected = { IpAddress, "1.1.1.1" };
+    Token expected = { Ipv4Address, "1.1.1.1" };
+
+    ASSERT_EQ(actual, expected);
+}
+
+TEST(LexerTests, TestIp6Address)
+{
+    std::string full = "2001:0db8:85a3:0000:0000:8a2e:0370:7334";
+    std::string compressed = "2001:db8:85a3::8a2e:370:7334";
+    std::string leadingZeroes = "2001:0db8::0001";
+    std::string embeddedIpv4 = "::ffff:192.168.1.1";
+    std::string loopback = "::1";
+
+    Token actual = Lexer{full}.nextToken();
+    Token expected = { Ipv6Address, full };
 
     ASSERT_EQ(actual, expected);
 }

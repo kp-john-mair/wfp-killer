@@ -55,6 +55,18 @@ std::string Token::description() const
         return std::format("{}({})", name, text);
 }
 
+std::string Lexer::identifierString()
+{
+    int start = _currentIndex;
+
+    // Identifiers cannot contain spaces, read remaining text until the next space
+    // and store it in an indentifier token.
+    while(_currentIndex < _input.length() && !std::isspace(peek()))
+        _currentIndex++;
+
+    return _input.substr(start, _currentIndex - start);
+}
+
  auto Lexer::maybeKeyword() -> std::optional<Token>
 {
     auto itKeyword = std::find_if(keywords.begin(), keywords.end(),
@@ -92,26 +104,10 @@ Token Lexer::string()
     return {TokenType::String, content};
 }
 
-Token Lexer::ipAddressOrNumber()
-{
-    size_t start = _currentIndex;
-    while(_currentIndex < _input.length() && (isdigit(peek()) || peek() == '.'))
-        ++_currentIndex;
-
-    std::string content = _input.substr(start, _currentIndex - start);
-
-    if(std::regex_match(content, ipv4Regex))
-        return {TokenType::IpAddress, content};
-    else if(std::ranges::all_of(content, isdigit))
-        return {TokenType::Number, content};
-
-    throw ParseError{std::format("Invalid token: got {} - not a number or an ipv4 address!", content)};
-}
-
 void Lexer::skipWhitespace()
 {
     // Eat up all whitespace between lexemes
-    while(_currentIndex < _input.length() && std::isspace(_input[_currentIndex]))
+    while(_currentIndex < _input.length() && std::isspace(peek()))
         ++_currentIndex;
 }
 
@@ -150,11 +146,15 @@ Token Lexer::nextToken() {
         std::optional<Token> pKeyword = maybeKeyword();
         if(pKeyword)
             return *pKeyword;
-        // Tokens that start with a digit
-        else if(isdigit(lookahead))
-            return ipAddressOrNumber();
 
-        // Anythine else - not supported.
+        std::string ident = identifierString();
+
+        if(std::regex_match(ident, ipv4Regex))
+            return {TokenType::IpAddress, ident};
+        else if(std::ranges::all_of(ident, isdigit))
+            return {TokenType::Number, ident};
+
+        // Anything else - not supported.
         throw ParseError{std::format("Unrecognized symbol: '{}'!", lookahead)};
     }
     }

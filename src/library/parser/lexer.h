@@ -68,11 +68,10 @@ private:
     // Check if a keyword lexeme was matched, i.e maybeKeyword() will return a Token
     // if a keyword appears next in the input stream, otherwise it returns an empty optional.
     auto maybeKeyword() -> std::optional<Token>;
-
     Token string();
-    Token ipAddressOrNumber();
     void skipWhitespace();
     char peek() const { return _input[_currentIndex]; }
+    std::string identifierString();
 
 private:
     std::string _input;

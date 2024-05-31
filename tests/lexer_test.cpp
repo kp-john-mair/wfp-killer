@@ -14,7 +14,7 @@ TEST(LexerTests, TestBasicLexing)
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
     std::vector expected = {
-        PermitAction, OutDir, Ipv4, Proto, LBrack,
+        PermitAction, OutDir, Inet4, Proto, LBrack,
         Tcp, Comma, Udp, RBrack, From, String
     };
 
@@ -23,13 +23,13 @@ TEST(LexerTests, TestBasicLexing)
 
 TEST(LexerTests, TestAllTokens)
 {
-    std::string input = R"(permit block out in inet inet6 proto {tcp, udp} from "baby" port 53 1.1.1.1)";
+    std::string input = R"(permit block out ::1 in inet inet6 proto {tcp, udp} from "baby" port 53 1.1.1.1)";
     Lexer lexer{input};
 
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
     std::vector expected = {
-        PermitAction, BlockAction, OutDir, InDir, Ipv4, Ipv6, Proto, LBrack,
+        PermitAction, BlockAction, OutDir, Ipv6Address, InDir, Inet4, Inet6, Proto, LBrack,
         Tcp, Comma, Udp, RBrack, From, String, Port, Number, Ipv4Address
     };
 

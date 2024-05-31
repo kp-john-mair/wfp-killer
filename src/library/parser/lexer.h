@@ -32,8 +32,8 @@ enum class TokenType : uint32_t
     Udp,
     Ipv4Address,
     Ipv6Address,
-    Ipv4,
-    Ipv6,
+    Inet4,
+    Inet6,
     Comma
 };
 

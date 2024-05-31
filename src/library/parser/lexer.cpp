@@ -29,8 +29,8 @@ const std::vector<Keyword> keywords = {
     // Longer lexemes (that share a prefix with smaller lexemes) need to appear first -
     // so 'inet6' before 'inet' and inet before 'in'
     // otherwise the longer lexemes will never be matched.
-    { .tokenType = TokenType::Ipv6, .lexeme = "inet6" },
-    { .tokenType = TokenType::Ipv4, .lexeme = "inet" },
+    { .tokenType = TokenType::Inet6, .lexeme = "inet6" },
+    { .tokenType = TokenType::Inet4, .lexeme = "inet" },
     { .tokenType = TokenType::InDir, .lexeme = "in" },
     { .tokenType = TokenType::OutDir, .lexeme = "out" },
     { .tokenType = TokenType::Port, .lexeme = "port" },

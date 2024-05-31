@@ -70,6 +70,7 @@ TEST(LexerTests, TestString)
 
     Lexer lexer{input};
     Token actual = lexer.nextToken();
+    // Strips out the outer ""
     Token expected = { String, "the air can tear dead snails from the elephants lung" };
 
     ASSERT_EQ(actual, expected);
@@ -88,16 +89,30 @@ TEST(LexerTests, TestIp4Address)
 
 TEST(LexerTests, TestIp6Address)
 {
-    std::string full = "2001:0db8:85a3:0000:0000:8a2e:0370:7334";
-    std::string compressed = "2001:db8:85a3::8a2e:370:7334";
-    std::string leadingZeroes = "2001:0db8::0001";
-    std::string embeddedIpv4 = "::ffff:192.168.1.1";
-    std::string loopback = "::1";
+    std::vector<std::string> addresses =
+    {
+        // Full
+        "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        // Compressed
+        "2407::9a62:2100:483:91ec:9221:cad",
+        // Link-local
+        "fe80::1096:e770:9d55:7fef",
+        // Unique-local
+        "fd12:3456:789a:1::1",
+        // With leading zeroes
+        "2001:0db8::0001",
+        // Embedded ipv4
+        "::ffff:192.168.1.1",
+        // Loopback
+        "::1"
+    };
 
-    Token actual = Lexer{full}.nextToken();
-    Token expected = { Ipv6Address, full };
-
-    ASSERT_EQ(actual, expected);
+    for(const auto &address : addresses)
+    {
+        Token actual = Lexer{address}.nextToken();
+        Token expected = { Ipv6Address, address };
+        ASSERT_EQ(actual, expected);
+    }
 }
 
 int main(int argc, char** argv)

@@ -8,10 +8,9 @@ add_library(wfpklib STATIC ${SOURCES})
 
 # Ensure all our MS libs are linked (this replaces the #pragma lib directives)
 target_link_libraries(wfpklib
-    PUBLIC
+    PRIVATE
     ws2_32
     fwpuclnt
-    shell32
     rpcrt4
 )
 

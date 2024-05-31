@@ -5,4 +5,5 @@ add_subdirectory(library)
 add_executable(wfpk main.cpp)
 
 # Include directory for our project headers
-target_link_libraries(wfpk PRIVATE wfpklib)
+# shell32 lib is used by the IsUserAnAdmin() function
+target_link_libraries(wfpk PRIVATE shell32 wfpklib)

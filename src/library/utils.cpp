@@ -4,12 +4,22 @@
 #include <utils.h>
 
 namespace wfpk {
+// Ipv4
 std::string ipToString(UINT32 ipAddress)
 {
     char str[INET_ADDRSTRLEN]{};
     InetNtopA(AF_INET, &ipAddress, str, INET_ADDRSTRLEN);
 
     return std::string{str};
+}
+
+// Ipv6
+std::string ipToString(const UINT8 (&ipAddress)[16])
+{
+    char str[INET6_ADDRSTRLEN]{};
+    InetNtopA(AF_INET6, ipAddress, str, INET6_ADDRSTRLEN);
+
+    return str;
 }
 
 bool isIpv4(const std::string &ipAddress)
@@ -22,14 +32,6 @@ bool isIpv6(const std::string &ipAddress)
 {
     struct in6_addr ipv6Addr;
     return InetPtonA(AF_INET6, ipAddress.c_str(), &ipv6Addr) == 1;
-}
-
-std::string ipToString(const UINT8 (&ipAddress)[16])
-{
-    char str[INET6_ADDRSTRLEN]{};
-    InetNtopA(AF_INET6, ipAddress, str, INET6_ADDRSTRLEN);
-
-    return str;
 }
 
 std::string blobToString(const FWP_BYTE_BLOB &blob)

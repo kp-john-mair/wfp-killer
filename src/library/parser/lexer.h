@@ -10,9 +10,6 @@ public:
         : std::runtime_error(reason) {}
 };
 
-// Forward declaration
-struct Keyword;
-
 enum class TokenType : uint32_t
 {
     EndOfInput,

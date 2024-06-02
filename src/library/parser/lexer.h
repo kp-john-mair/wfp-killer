@@ -71,7 +71,7 @@ private:
     auto maybeKeyword() -> std::optional<Token>;
     // Lex a string literal
     Token string();
-    // Lex an ipAddress (v4 or v6) together with its subnet
+    // Lex an ipAddress (v4 or v6) together with its subnet.
     // The 'pos' param represents the position of the '/' separating address from subnet.
     // Returns an Ipv4Address or Ipv6Address token - but represents a subnet
     Token ipAddressAndSubnet(const std::string &addressAndSubnet, size_t pos);

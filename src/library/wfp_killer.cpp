@@ -110,8 +110,6 @@ void WfpKiller::listFilters(const Options &options) const
 
         std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
 
-        // TODO: iterate over and remove unmatched filters BEFORE we display them, this way
-        // we can properly display or omit the subLayer heading etc
         for(const auto &[subLayerKey, filterSet] : filtersBySubLayer)
         {
             std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{_engine.getSubLayerByKey(subLayerKey)};

@@ -86,6 +86,21 @@ TEST(LexerTests, TestIp4Address)
     ASSERT_EQ(actual, expected);
 }
 
+TEST(LexerTests, TestIp4AddressesNoSpaceContext)
+{
+    std::string input = "from {1.1.1.1,2.2.2.2}";
+
+    Lexer lexer{input};
+
+    auto actual = lexer.allTokens() | views::transform(&Token::type);
+
+    std::vector expected = {
+        From, LBrack, Ipv4Address, Comma, Ipv4Address, RBrack
+    };
+
+    ASSERT_TRUE(std::ranges::equal(actual, expected));
+}
+
 TEST(LexerTests, TestIp6Address)
 {
     std::vector<std::string> addresses =
@@ -112,6 +127,21 @@ TEST(LexerTests, TestIp6Address)
         Token expected = { Ipv6Address, address };
         ASSERT_EQ(actual, expected);
     }
+}
+
+TEST(LexerTests, TestIp6AddressesNoSpaceContext)
+{
+    std::string input = "from {::1,5fca:1234::2}";
+
+    Lexer lexer{input};
+
+    auto actual = lexer.allTokens() | views::transform(&Token::type);
+
+    std::vector expected = {
+        From, LBrack, Ipv6Address, Comma, Ipv6Address, RBrack
+    };
+
+    ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
 
 int main(int argc, char** argv)

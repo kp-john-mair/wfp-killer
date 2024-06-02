@@ -42,6 +42,9 @@ private:
     inline static Singleton* _instance = nullptr;
 };
 
+// Split a std::string based on a delim
+auto splitString(const std::string &str, char delim) -> std::vector<std::string>;
+
 // Helpers to represent Ip addresses as strings
 // Ipv4
 std::string ipToString(UINT32 ipAddress);

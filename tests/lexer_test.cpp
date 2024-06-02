@@ -86,6 +86,24 @@ TEST(LexerTests, TestIp4Address)
     ASSERT_EQ(actual, expected);
 }
 
+TEST(LexerTests, TestIp4AddressWithSubnet)
+{
+    std::string inRangePrefix = "1.1.1.1/16";
+    std::string maxPrefix = "1.1.1.1/32";
+    std::string minPrefix = "1.1.1.1/1";
+    std::string prefixExceeded = "1.1.1.1/33";
+    std::string zeroPrefix = "1.1.1.1/0";
+
+    // Valid subnets
+    ASSERT_EQ((Lexer{inRangePrefix}.nextToken()), (Token{ Ipv4Address, inRangePrefix }));
+    ASSERT_EQ((Lexer{maxPrefix}.nextToken()), (Token{ Ipv4Address, maxPrefix }));
+    ASSERT_EQ((Lexer{minPrefix}.nextToken()), (Token{ Ipv4Address, minPrefix }));
+
+    // Invalid subnets
+    ASSERT_THROW((Lexer{prefixExceeded}.nextToken()), wfpk::ParseError);
+    ASSERT_THROW((Lexer{zeroPrefix}.nextToken()), wfpk::ParseError);
+}
+
 TEST(LexerTests, TestIp4AddressesNoSpaceContext)
 {
     std::string input = "from {1.1.1.1,2.2.2.2}";
@@ -127,6 +145,24 @@ TEST(LexerTests, TestIp6Address)
         Token expected = { Ipv6Address, address };
         ASSERT_EQ(actual, expected);
     }
+}
+
+TEST(LexerTests, TestIp6AddressWithSubnet)
+{
+    std::string inRangePrefix = "2001::123/64";
+    std::string maxPrefix = "2001::123/128";
+    std::string minPrefix = "2001::123/1";
+    std::string prefixExceeded = "2001::123/129";
+    std::string zeroPrefix = "2001::123/0";
+
+    // Valid subnets
+    ASSERT_EQ((Lexer{inRangePrefix}.nextToken()), (Token{ Ipv6Address, inRangePrefix }));
+    ASSERT_EQ((Lexer{maxPrefix}.nextToken()), (Token{ Ipv6Address, maxPrefix }));
+    ASSERT_EQ((Lexer{minPrefix}.nextToken()), (Token{ Ipv6Address, minPrefix }));
+
+    // Invalid subnets
+    ASSERT_THROW((Lexer{prefixExceeded}.nextToken()), wfpk::ParseError);
+    ASSERT_THROW((Lexer{zeroPrefix}.nextToken()), wfpk::ParseError);
 }
 
 TEST(LexerTests, TestIp6AddressesNoSpaceContext)

@@ -27,8 +27,11 @@ enum class TokenType : uint32_t
     To,
     Tcp,
     Udp,
+
+    // These tokens may also represent subnets
     Ipv4Address,
     Ipv6Address,
+
     Inet4,
     Inet6,
     Comma
@@ -66,7 +69,12 @@ private:
     // Check if a keyword lexeme was matched, i.e maybeKeyword() will return a Token
     // if a keyword appears next in the input stream, otherwise it returns an empty optional.
     auto maybeKeyword() -> std::optional<Token>;
+    // Lex a string literal
     Token string();
+    // Lex an ipAddress (v4 or v6) together with its subnet
+    // The 'pos' param represents the position of the '/' separating address from subnet.
+    // Returns an Ipv4Address or Ipv6Address token - but represents a subnet
+    Token ipAddressAndSubnet(const std::string &addressAndSubnet, size_t pos);
     void skipWhitespace();
     char peek() const { return _input[_currentIndex]; }
     std::string identifierString();

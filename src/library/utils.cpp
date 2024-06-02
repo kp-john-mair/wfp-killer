@@ -4,6 +4,17 @@
 #include <utils.h>
 
 namespace wfpk {
+auto splitString(const std::string &str, char delim) -> std::vector<std::string>
+{
+    auto parts = str | std::ranges::views::split(delim);
+    std::vector<std::string> splitVec;
+
+    for(auto &&part : parts)
+        splitVec.emplace_back(part.begin(), part.end());
+
+    return splitVec;
+}
+
 // Ipv4
 std::string ipToString(UINT32 ipAddress)
 {
@@ -60,7 +71,7 @@ std::string wideStringToString(const std::wstring &wstr)
     std::string str;
 
     // hack to convert wide strings to strings
-    std::transform(wstr.begin(), wstr.end(), std::back_inserter(str), [] (wchar_t c) {
+    std::ranges::transform(wstr, std::back_inserter(str), [] (wchar_t c) {
         return static_cast<char>(c);
     });
 

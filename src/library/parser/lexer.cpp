@@ -45,9 +45,6 @@ const std::vector<Keyword> keywords = {
 
 // Due to ipv4, ipv6 and subnet addresses we allow these additional chars in our identifiers.
 const std::unordered_set<char> allowedIdentSymbols = { ':', '.', '/' };
-
-//   static const std::regex ipv4Regex(R"(^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$)");
-//   static const std::regex ipv6Regex(R"((A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,6}Z)|(A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}Z)|(A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}Z)|(A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}Z)|(A([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}Z)|(A([0-9a-f]{1,4}:){1,6}(:[0-9a-f]{1,4}){1,1}Z)|(A(([0-9a-f]{1,4}:){1,7}|:):Z)|(A:(:[0-9a-f]{1,4}){1,7}Z)|(A((([0-9a-f]{1,4}:){6})(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})Z)|(A(([0-9a-f]{1,4}:){5}[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})Z)|(A([0-9a-f]{1,4}:){5}:[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,3}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,2}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,1}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A(([0-9a-f]{1,4}:){1,5}|:):(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A:(:[0-9a-f]{1,4}){1,5}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z))");
 }
 
 std::string Token::description() const
@@ -124,6 +121,26 @@ std::vector<Token> Lexer::allTokens()
     return tokens;
 }
 
+Token Lexer::ipAddressAndSubnet(const std::string &addressAndSubnet, size_t pos)
+{
+    assert(pos < addressAndSubnet.length());
+
+    const std::string address{addressAndSubnet.begin(), addressAndSubnet.begin() + pos};
+    const std::string subnet{addressAndSubnet.begin() + pos + 1, addressAndSubnet.end()};
+
+    uint32_t subnetValue = static_cast<uint32_t>(std::atoi(subnet.c_str()));
+
+    if(subnetValue == 0)
+        throw ParseError{std::format("Got an invalid 0 prefix for {}", address)};
+
+    if(isIpv6(address) && subnetValue <= 128)
+        return Token{TokenType::Ipv6Address, std::format("{}/{}", address, subnet)};
+    else if(isIpv4(address) && subnetValue <= 32)
+        return Token{TokenType::Ipv4Address, std::format("{}/{}", address, subnet)};
+
+    throw ParseError{std::format("Invalid ip address and subnet: {}/{}", address, subnet)};
+}
+
 Token Lexer::nextToken() {
     static const Token EndOfInputToken{TokenType::EndOfInput, "EOF"};
 
@@ -151,10 +168,14 @@ Token Lexer::nextToken() {
         if(pKeyword)
             return *pKeyword;
 
-        // Look for identifiers - an identifier is a string of text
         // Identifiers are comprised of alphanumeric chars as well as some additional
         // symbols such as '.', '/' and ':' which are used by ipv{4,6} subnets.
         const std::string ident = identifierString();
+
+        // If it contains a '/' it must be a subnet
+        auto pos = ident.find('/');
+        if(pos != std::string::npos)
+             return ipAddressAndSubnet(ident, pos);
 
         if(isIpv6(ident))
             return {TokenType::Ipv6Address, ident};

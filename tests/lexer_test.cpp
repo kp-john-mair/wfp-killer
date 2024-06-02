@@ -36,7 +36,6 @@ TEST(LexerTests, TestAllTokens)
     ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
 
-
 TEST(LexerTests, TestIgnoresWhiteSpace)
 {
     std::string input = "\t\n  block \t    out\n    proto  {  tcp ,\n\t  udp  }  ";

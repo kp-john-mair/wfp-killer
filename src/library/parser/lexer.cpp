@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <stdexcept>
 #include <optional>
 #include <parser/lexer.h>
@@ -42,9 +43,11 @@ const std::vector<Keyword> keywords = {
     { .tokenType = TokenType::Comma, .lexeme = "," }
 };
 
-   // Our regex matchers
-   static const std::regex ipv4Regex(R"(^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$)");
-   static const std::regex ipv6Regex(R"((A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,6}Z)|(A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}Z)|(A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}Z)|(A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}Z)|(A([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}Z)|(A([0-9a-f]{1,4}:){1,6}(:[0-9a-f]{1,4}){1,1}Z)|(A(([0-9a-f]{1,4}:){1,7}|:):Z)|(A:(:[0-9a-f]{1,4}){1,7}Z)|(A((([0-9a-f]{1,4}:){6})(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})Z)|(A(([0-9a-f]{1,4}:){5}[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})Z)|(A([0-9a-f]{1,4}:){5}:[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,3}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,2}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,1}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A(([0-9a-f]{1,4}:){1,5}|:):(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A:(:[0-9a-f]{1,4}){1,5}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z))");
+// Due to ipv4, ipv6 and subnet addresses we allow these additional chars in our identifiers.
+const std::unordered_set<char> allowedIdentSymbols = { ':', '.', '/' };
+
+//   static const std::regex ipv4Regex(R"(^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$)");
+//   static const std::regex ipv6Regex(R"((A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,6}Z)|(A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}Z)|(A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}Z)|(A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}Z)|(A([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}Z)|(A([0-9a-f]{1,4}:){1,6}(:[0-9a-f]{1,4}){1,1}Z)|(A(([0-9a-f]{1,4}:){1,7}|:):Z)|(A:(:[0-9a-f]{1,4}){1,7}Z)|(A((([0-9a-f]{1,4}:){6})(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})Z)|(A(([0-9a-f]{1,4}:){5}[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})Z)|(A([0-9a-f]{1,4}:){5}:[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,3}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,2}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,1}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A(([0-9a-f]{1,4}:){1,5}|:):(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z)|(A:(:[0-9a-f]{1,4}){1,5}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}Z))");
 }
 
 std::string Token::description() const
@@ -60,9 +63,9 @@ std::string Lexer::identifierString()
 {
     int start = _currentIndex;
 
-    // Identifiers cannot contain spaces, read remaining text until the next space
-    // and store it in an indentifier token.
-    while(_currentIndex < _input.length() && !std::isspace(peek()))
+    // Identifiers are alphanumeric + additional allowed symbols used by special identifiers
+    // such as ip subnets - so '.' and ':' and '/' are allowed too.
+    while(_currentIndex < _input.length() && (std::isalnum(peek()) || allowedIdentSymbols.contains(peek())))
         _currentIndex++;
 
     return _input.substr(start, _currentIndex - start);
@@ -148,6 +151,9 @@ Token Lexer::nextToken() {
         if(pKeyword)
             return *pKeyword;
 
+        // Look for identifiers - an identifier is a string of text
+        // Identifiers are comprised of alphanumeric chars as well as some additional
+        // symbols such as '.', '/' and ':' which are used by ipv{4,6} subnets.
         const std::string ident = identifierString();
 
         if(isIpv6(ident))

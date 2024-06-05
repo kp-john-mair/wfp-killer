@@ -14,6 +14,7 @@ enum class TokenType : uint32_t
 {
     EndOfInput,
     BlockAction,
+    PermitBlockAction,
     PermitAction,
     LBrack,
     RBrack,
@@ -27,6 +28,7 @@ enum class TokenType : uint32_t
     To,
     Tcp,
     Udp,
+    All,
 
     // These tokens may also represent subnets
     Ipv4Address,
@@ -50,6 +52,8 @@ struct Token
     // comparison
     auto operator<=>(const Token &other) const = default;
 };
+
+inline static const Token EndOfInputToken{TokenType::EndOfInput, "EOF"};
 
 // The Lexer is responsible for breaking up a string of text into tokens
 class Lexer

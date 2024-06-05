@@ -17,6 +17,7 @@
 #include <concepts>
 #include <assert.h>
 #include <filesystem>
+#include <magic_enum.h>
 
 // Allow GUID to be used as a key in a hash
 template <>
@@ -41,6 +42,13 @@ public:
 private:
     inline static Singleton* _instance = nullptr;
 };
+
+// Given an enum value, return its name as a string
+template <typename T>
+std::string enumName(T enumValue)
+{
+    return std::string{magic_enum::enum_name(value)};
+}
 
 // Split a std::string based on a delim
 auto splitString(const std::string &str, char delim) -> std::vector<std::string>;

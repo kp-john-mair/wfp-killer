@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include <optional>
 #include <parser/lexer.h>
-#include <magic_enum.h>
 
 namespace wfpk {
 // Keywords are simple lexemes with static content.
@@ -40,6 +39,7 @@ const std::vector<Keyword> keywords = {
     { .tokenType = TokenType::To, .lexeme = "to" },
     { .tokenType = TokenType::Tcp, .lexeme = "tcp" },
     { .tokenType = TokenType::Udp, .lexeme = "udp" },
+    { .tokenType = TokenType::All, .lexeme = "all" },
     { .tokenType = TokenType::Comma, .lexeme = "," }
 };
 
@@ -49,7 +49,7 @@ const std::unordered_set<char> allowedIdentSymbols = { ':', '.', '/' };
 
 std::string Token::description() const
 {
-    const std::string name{magic_enum::enum_name(type)};
+    const auto name = enumName(type);
     if(text.empty())
         return name;
     else
@@ -142,8 +142,6 @@ Token Lexer::ipAddressAndSubnet(const std::string &addressAndSubnet, size_t pos)
 }
 
 Token Lexer::nextToken() {
-    static const Token EndOfInputToken{TokenType::EndOfInput, "EOF"};
-
     // End of input
     if(_currentIndex >= _input.length())
         return EndOfInputToken;

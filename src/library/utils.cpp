@@ -2,8 +2,10 @@
 #include <ws2tcpip.h>
 #include <fwpmu.h>
 #include <utils.h>
+#include <magic_enum>
 
 namespace wfpk {
+
 auto splitString(const std::string &str, char delim) -> std::vector<std::string>
 {
     auto parts = str | std::ranges::views::split(delim);

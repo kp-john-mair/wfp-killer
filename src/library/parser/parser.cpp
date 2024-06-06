@@ -5,7 +5,7 @@ auto Parser::match(TokenType type) -> std::optional<Token>
 {
     std::string tokenStr{enumName(type)};
     if(_shouldTrace)
-        std::cout << "Looking for a token of type:" << tokenStr;
+        std::cout << "Looking for a token of type: " << tokenStr << "\n";
 
 
     // Save current token
@@ -14,7 +14,7 @@ auto Parser::match(TokenType type) -> std::optional<Token>
     if(_lookahead.type == type)
     {
         if(_shouldTrace)
-            std::cout << "Matched a token of type:" << tokenStr << "text: " << _lookahead.text;
+            std::cout << "Matched a token of type: " << tokenStr << " text: " << _lookahead.text << "\n";
 
         // Move the input to the next token
         consume();
@@ -37,7 +37,7 @@ auto Parser::numberList() -> std::vector<uint16_t>
         if(auto tok = match(TokenType::Number))
         {
             numbers.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
-            if(match(TokenType::Comma))
+            if(peek(TokenType::Comma))
                 consume(); // advance by one token
             else if(match(TokenType::RBrack))
                 return numbers;
@@ -71,7 +71,7 @@ auto Parser::addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>
         if(auto tok = match(TokenType::Number))
             ports.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
         else if(peek(TokenType::LBrack))
-            auto ports = numberList();
+            ports = numberList();
         else
            unexpectedTokenError();
     }
@@ -126,8 +126,6 @@ FilterConditions Parser::conditions()
         sourceCondition(&filterConditions);
     if(match(TokenType::To))
         destCondition(&filterConditions);
-
-
 
     return filterConditions;
 }

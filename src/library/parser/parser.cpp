@@ -36,7 +36,7 @@ auto Parser::numberList() -> std::vector<uint16_t>
     {
         if(auto tok = match(TokenType::Number))
         {
-            numbers.push_back(static_cast<uint16_t>(std::atoi(tok->text)));
+            numbers.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
             if(match(TokenType::Comma))
                 consume(); // advance by one token
             else if(match(TokenType::RBrack))
@@ -61,7 +61,7 @@ auto Parser::numberList() -> std::vector<uint16_t>
 auto Parser::addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>
 {
     std::string address;
-    std::vector<uint16_t> ports{0};
+    std::vector<uint16_t> ports;
 
     if(auto tok = match(TokenType::Ipv4Address, TokenType::Ipv6Address))
         address = tok->text;
@@ -69,14 +69,17 @@ auto Parser::addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>
     if(match(TokenType::Port))
     {
         if(auto tok = match(TokenType::Number))
-        {
-            ports = static_cast<uint16_t>(std::atoi(tok->text));
-        }
+            ports.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
         else if(peek(TokenType::LBrack))
             auto ports = numberList();
-
+        else
+           unexpectedTokenError();
     }
 
+    if(address.empty() || ports.empty())
+        throw ParseError{"Either an ip address or a port is needed."};
+
+    return {address, std::move(ports)};
 }
 
 void Parser::sourceCondition(FilterConditions *pConditions)
@@ -90,18 +93,19 @@ void Parser::sourceCondition(FilterConditions *pConditions)
         // we don't currently allow a source app to be constrained by port or ip
         return;
     }
-    else
-    {
-    if(auto tok = match(TokenType::Ipv4Address, TokenType::Ipv6Address))
-    {
-        pConditions->sourceIp = tok->text;
-    }
 
-    if(match(TokenType::Port))
-    {
-        if(auto tok = match(TokenType::Number))
-            pConditions->sourcePorts.push_back(static_cast<uint32_t>(std::atoi(tok->text.c_str())));
-    }
+    const auto &[address, ports] = addressAndPorts();
+
+    pConditions->sourceIp = address;
+    pConditions->sourcePorts = std::move(ports);
+}
+
+void Parser::destCondition(FilterConditions *pConditions)
+{
+    const auto &[address, ports] = addressAndPorts();
+
+    pConditions->destIp = address;
+    pConditions->destPorts = std::move(ports);
 }
 
 FilterConditions Parser::conditions()
@@ -109,23 +113,21 @@ FilterConditions Parser::conditions()
     if(match(TokenType::All))
         return NoFilterConditions;
 
-    FilterConditions conditions{};
+    FilterConditions filterConditions{};
 
     if(auto tok = match(TokenType::Inet4, TokenType::Inet6))
     {
-        if(tok.type == TokenType::Inet4)
-            conditions.ipVersion = FilterConditions::Inet4;
+        if(tok->type == TokenType::Inet4)
+            filterConditions.ipVersion = FilterConditions::Inet4;
         else
-            conditions.ipVersion = FilterConditions::Inet6;
+            filterConditions.ipVersion = FilterConditions::Inet6;
     }
-    else if(match(TokenType::From))
-    {
-        sourceCondition(&conditions);
-    }
-    else if(match(TokenType::To))
-        destinationCondition(&conditions);
-     // foo
+    if(match(TokenType::From))
+        sourceCondition(&filterConditions);
+    if(match(TokenType::To))
+        destCondition(&filterConditions);
 
+    return filterConditions;
 }
 
 std::unique_ptr<Node> Parser::filter()
@@ -138,7 +140,7 @@ std::unique_ptr<Node> Parser::filter()
     else if(match(TokenType::BlockAction))
         action = FilterNode::Block;
     else
-        throw ParseError(std::format("Expected block or permit, but got: {}", peek().description()));
+        unexpectedTokenError();
 
     if(match(TokenType::OutDir))
         // cannot actually decice the layer until the "conditions" have been parsed
@@ -149,43 +151,45 @@ std::unique_ptr<Node> Parser::filter()
     else if(match(TokenType::InDir))
         layer = FilterNode::AUTH_CONNECT_V4;
     else
-        throw ParseError(std::format("Expected in or out, but got: {}", peek().description()));
+        unexpectedTokenError();
 
+    FilterConditions filterConditions = conditions();
 
-    conditions();
-
-    conditions(dict);
-    match(TokenType::BlockClose);
-
-    if(dict.contains(QLatin1String("PIAEmpty")))
-        return QJsonValue::Null;
-    else
-        return dict;
+    return std::make_unique<FilterNode>(action, layer, std::move(filterConditions));
 }
 
 std::unique_ptr<Node> Parser::parse()
 {
-    using enum TokenType;
+    auto ruleset = std::make_unique<RulesetNode>();
+
     try
     {
         // Get initial token
         consume();
 
-        if(_lookahead.type == TokenType::PermitAction)
+        while(!peek(TokenType::EndOfInput))
         {
-            auto dict = filter();
-            return dict;
+            if(peek(TokenType::PermitAction, TokenType::BlockAction))
+            {
+                ruleset->addChild(filter());
+            }
+            else
+            {
+                unexpectedTokenError();
+            }
         }
+
+        return ruleset;
     }
     catch(const std::exception &ex)
     {
-        qCritical() << "Failed to parse scutil output: " << ex.what();
-        return QJsonValue::Undefined;
+        std::cerr << "Failed to parse scutil output: " << ex.what();
+        return ruleset;
     }
     catch(...)
     {
-        qCritical() << "Failed to parse scutil output: Unknown error";
-        return QJsonValue::Undefined;
+        std::cerr << "Failed to parse scutil output: Unknown error";
+        return ruleset;
     }
 }
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <parser/lexer.h>
-#include <pair>
+#include <utility>
 
 namespace wfpk {
 
@@ -16,19 +16,16 @@ protected:
     Node() = default;
 
 public:
+    virtual ~Node() = default;
+
     void accept(const Visitor &visitor)
     {
         acceptNode(visitor);
     }
 
-    void setChildren(std::vector<std::unique_ptr<Node>> children)
-    {
-        _pChildren = std::move(children);
-    }
-
     void addChild(std::unique_ptr<Node> child)
     {
-        _pChildren.push_back(child);
+        _pChildren.push_back(std::move(child));
     }
 
 private:
@@ -42,28 +39,10 @@ private:
 class RulesetNode final : public Node
 {
 public:
-    RulesetNode(std::vector<std::unique_ptr<Node>> children)
-    : Node()
-    {
-        setChildren(children);
-    }
-};
+    RulesetNode() = default;
 
-class FilterNode final : public Node
-{
-public:
-    enum class Action { Block, Permit };
-    using enum Action;
-
-    enum class Layer { AUTH_CONNECT_V4,
-                       AUTH_RECV_V4,
-                       AUTH_CONNECT_V6,
-                       AUTH_RECV_V6 };
-    using enum Layer;
-
-    FilterNode() : Node{}
-    {
-    }
+private:
+    virtual void acceptNode(const Visitor &visitor) override {}
 };
 
 struct FilterConditions
@@ -77,11 +56,39 @@ struct FilterConditions
     std::string sourceIp;
     std::string destIp;
     std::string interfaceName;
-    IpVersion ipVersion{};
+    IpVersion ipVersion{IpVersion::Both};
 };
 
 // Represents no conditions be applied
 inline const FilterConditions NoFilterConditions = {};
+
+class FilterNode final : public Node
+{
+public:
+    enum class Action { Block, Permit };
+    using enum Action;
+
+    enum class Layer { AUTH_CONNECT_V4,
+                       AUTH_RECV_V4,
+                       AUTH_CONNECT_V6,
+                       AUTH_RECV_V6 };
+    using enum Layer;
+
+    FilterNode(Action action, Layer layer, FilterConditions conditions)
+    : _action{action}
+    , _layer{layer}
+    , _conditions{conditions}
+    {
+    }
+
+private:
+    virtual void acceptNode(const Visitor &visitor) override {}
+
+private:
+    Action _action{};
+    Layer _layer{};
+    FilterConditions _conditions;
+};
 
 class Parser
 {
@@ -92,9 +99,9 @@ public:
 
 public:
     // Parse the token stream
-    void parse();
+    std::unique_ptr<Node> parse();
     // Parse the token stream with verbose tracing
-    void parseTrace()
+    std::unique_ptr<Node> parseTrace()
     {
         _shouldTrace = true;
         return parse();
@@ -106,7 +113,16 @@ private:
     requires (std::same_as<TokenTypes, TokenType> && ...)
     auto match(TokenTypes... types) -> std::optional<Token>
     {
-        return (match(types) || ...);
+        std::optional<Token> result;
+        ((result = match(types)) || ...);
+        return result;
+    }
+
+    template <typename... TokenTypes>
+    requires (std::same_as<TokenTypes, TokenType> && ...)
+    auto peek(TokenTypes... types) -> bool
+    {
+        return (peek(types) || ...);
     }
 
     // Token processing
@@ -117,7 +133,7 @@ private:
     void mustMatch(TokenType type)
     {
         if(!match(type))
-            unexpectedTokenError;
+            unexpectedTokenError();
     }
 
     // Consumes one token and moves the cursor
@@ -136,12 +152,12 @@ private:
     void sourceCondition(FilterConditions *conditions);
     void destCondition(FilterConditions *conditions);
 
-    auto addressAndPort() -> std::pair<std::string, std::vector<uint16_t>>;
+    auto addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>;
     auto numberList() -> std::vector<uint16_t>;
 
     void unexpectedTokenError()
     {
-        throw ParseError{std::format("Unexpected token, got: {}", peek().description())};
+        throw ParseError{std::format("hello {}", _lookahead.description())};
     }
 
 private:

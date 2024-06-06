@@ -2,7 +2,6 @@
 #include <ws2tcpip.h>
 #include <fwpmu.h>
 #include <utils.h>
-#include <magic_enum>
 
 namespace wfpk {
 

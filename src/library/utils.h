@@ -47,7 +47,7 @@ private:
 template <typename T>
 std::string enumName(T enumValue)
 {
-    return std::string{magic_enum::enum_name(value)};
+    return std::string{magic_enum::enum_name(enumValue)};
 }
 
 // Split a std::string based on a delim

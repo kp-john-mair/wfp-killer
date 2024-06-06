@@ -76,7 +76,7 @@ auto Parser::addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>
            unexpectedTokenError();
     }
 
-    if(address.empty() || ports.empty())
+    if(address.empty() && ports.empty())
         throw ParseError{"Either an ip address or a port is needed."};
 
     return {address, std::move(ports)};
@@ -127,6 +127,8 @@ FilterConditions Parser::conditions()
     if(match(TokenType::To))
         destCondition(&filterConditions);
 
+
+
     return filterConditions;
 }
 
@@ -158,7 +160,7 @@ std::unique_ptr<Node> Parser::filter()
     return std::make_unique<FilterNode>(action, layer, std::move(filterConditions));
 }
 
-std::unique_ptr<Node> Parser::parse()
+std::unique_ptr<RulesetNode> Parser::parse()
 {
     auto ruleset = std::make_unique<RulesetNode>();
 
@@ -183,12 +185,12 @@ std::unique_ptr<Node> Parser::parse()
     }
     catch(const std::exception &ex)
     {
-        std::cerr << "Failed to parse scutil output: " << ex.what();
+        std::cerr << "Failed to parse: " << ex.what();
         return ruleset;
     }
     catch(...)
     {
-        std::cerr << "Failed to parse scutil output: Unknown error";
+        std::cerr << "Failed to parse: Unknown error";
         return ruleset;
     }
 }

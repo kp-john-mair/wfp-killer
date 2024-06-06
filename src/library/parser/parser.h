@@ -28,6 +28,11 @@ public:
         _pChildren.push_back(std::move(child));
     }
 
+    auto children() -> const std::vector<std::unique_ptr<Node>>&
+    {
+        return _pChildren;
+    }
+
 private:
     virtual void acceptNode(const Visitor &visitor) = 0;
 
@@ -57,6 +62,8 @@ struct FilterConditions
     std::string destIp;
     std::string interfaceName;
     IpVersion ipVersion{IpVersion::Both};
+
+    auto operator<=>(const FilterConditions&) const = default;
 };
 
 // Represents no conditions be applied
@@ -81,6 +88,9 @@ public:
     {
     }
 
+    Action action() const { return _action; }
+    Layer layer() const { return _layer; }
+    const FilterConditions &filterConditions() const { return _conditions; }
 private:
     virtual void acceptNode(const Visitor &visitor) override {}
 
@@ -89,6 +99,42 @@ private:
     Layer _layer{};
     FilterConditions _conditions;
 };
+
+inline std::ostream& operator<<(std::ostream &ostream, const FilterNode &node)
+{
+
+    ostream << enumName(node.action()) << " " << enumName(node.layer()) << " ";
+
+    auto conditions = node.filterConditions();
+
+    if(conditions == NoFilterConditions)
+    {
+        ostream << "all ";
+        return ostream;
+    }
+
+    ostream << enumName(conditions.ipVersion) << " ";
+
+    if(!conditions.sourceIp.empty() || !conditions.sourcePorts.empty())
+        ostream << "from ";
+
+    if(!conditions.sourceIp.empty())
+        ostream << conditions.sourceIp << " ";
+
+    if(!conditions.sourcePorts.empty())
+        ostream << std::format("port {{ {} }}", joinVec(conditions.sourcePorts)) << " ";
+
+    if(!conditions.destIp.empty() || !conditions.destPorts.empty())
+        ostream << "to ";
+
+    if(!conditions.destIp.empty())
+        ostream << conditions.destIp << " ";
+
+    if(!conditions.destPorts.empty())
+        ostream << std::format("port {{ {} }}", joinVec(conditions.destPorts)) << " ";
+
+    return ostream;
+}
 
 class Parser
 {
@@ -99,9 +145,9 @@ public:
 
 public:
     // Parse the token stream
-    std::unique_ptr<Node> parse();
+    std::unique_ptr<RulesetNode> parse();
     // Parse the token stream with verbose tracing
-    std::unique_ptr<Node> parseTrace()
+    std::unique_ptr<RulesetNode> parseTrace()
     {
         _shouldTrace = true;
         return parse();
@@ -157,7 +203,7 @@ private:
 
     void unexpectedTokenError()
     {
-        throw ParseError{std::format("hello {}", _lookahead.description())};
+        throw ParseError{std::format("Unexpected token {}", _lookahead.description())};
     }
 
 private:

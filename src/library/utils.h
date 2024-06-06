@@ -74,6 +74,22 @@ bool isIpv4(const std::string &ipAddress);
 // Validate a string contains an ipv6 address
 bool isIpv6(const std::string &ipAddress);
 
+// Join together a vector of elements of type T as a string
+template <typename T>
+std::string joinVec(const std::vector<T>& ports) {
+    std::ostringstream oss;
+
+    for(size_t i = 0; i < ports.size(); ++i)
+    {
+        if(i != 0)
+            oss << ", ";
+
+        oss << ports[i];
+    }
+
+    return oss.str();
+}
+
 // void fwpConditionValueHandler(const FWP_CONDITION_VALUE &value, auto handlerFunc)
 // {
 //     switch(value.type)

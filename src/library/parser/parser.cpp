@@ -2,49 +2,11 @@
 
 namespace wfpk {
 
-std::string FilterNode::toString() const
-{
-    std::string output;
-
-    output += enumName(action()) + " " + enumName(layer()) + " ";
-
-    auto conditions = filterConditions();
-
-    if(conditions == NoFilterConditions)
-    {
-        output += "all ";
-        return output;
-    }
-
-    output += enumName(conditions.ipVersion) + " ";
-
-    if(!conditions.sourceIp.empty() || !conditions.sourcePorts.empty())
-        output += "from ";
-
-    if(!conditions.sourceIp.empty())
-        output += conditions.sourceIp + " ";
-
-    if(!conditions.sourcePorts.empty())
-        output += std::format("port {{ {} }}", joinVec(conditions.sourcePorts)) + " ";
-
-    if(!conditions.destIp.empty() || !conditions.destPorts.empty())
-        output += "to ";
-
-    if(!conditions.destIp.empty())
-        output += conditions.destIp + " ";
-
-    if(!conditions.destPorts.empty())
-        output += std::format("port {{ {} }}", joinVec(conditions.destPorts)) + " ";
-
-    return output;
-}
-
 auto Parser::match(TokenType type) -> std::optional<Token>
 {
     std::string tokenStr{enumName(type)};
     if(_shouldTrace)
         std::cout << "Looking for a token of type: " << tokenStr << "\n";
-
 
     // Save current token
     Token currentToken = _lookahead;
@@ -57,7 +19,7 @@ auto Parser::match(TokenType type) -> std::optional<Token>
         // Move the input to the next token
         consume();
 
-        return currentToken;;
+        return currentToken;
     }
     else
     {
@@ -67,36 +29,45 @@ auto Parser::match(TokenType type) -> std::optional<Token>
 
 auto Parser::numberList() -> std::vector<uint16_t>
 {
-    std::vector<uint16_t> numbers;
 
-    mustMatch(TokenType::LBrack);
-    while(true)
+    auto results = list([](Token tok)
     {
-        if(auto tok = match(TokenType::Number))
-        {
-            numbers.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
-            if(peek(TokenType::Comma))
-                consume(); // advance by one token
-            else if(match(TokenType::RBrack))
-                return numbers;
-            else
-                unexpectedTokenError();
-        }
-        // This will only trigger in the case of an empty list `{}`
-        else if(match(TokenType::RBrack))
-        {
-            return numbers;
-        }
-        else
-        {
-            unexpectedTokenError();
-        }
-    }
+        return static_cast<uint16_t>(std::atoi(tok.text.c_str()));
+    }, TokenType::Number);
 
-    return numbers;
+    return results;
+
+    // std::vector<uint16_t> numbers;
+
+    // mustMatch(TokenType::LBrack);
+    // while(true)
+    // {
+    //     if(auto tok = match(TokenType::Number))
+    //     {
+    //         numbers.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
+    //         if(peek(TokenType::Comma))
+    //             consume(); // advance by one token
+    //         else if(match(TokenType::RBrack))
+    //             return numbers;
+    //         else
+    //             unexpectedTokenError();
+    //     }
+    //     // This will only trigger in the case of an empty list `{}`
+    //     else if(match(TokenType::RBrack))
+    //     {
+    //         return numbers;
+    //     }
+    //     else
+    //     {
+    //         unexpectedTokenError();
+    //     }
+    // }
+
+    // return numbers;
 }
 
-auto Parser::addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>
+auto Parser::addressAndPorts()
+    -> std::pair<std::string, std::vector<uint16_t>>
 {
     std::string address;
     std::vector<uint16_t> ports;
@@ -181,7 +152,7 @@ std::unique_ptr<Node> Parser::filter()
         unexpectedTokenError();
 
     if(match(TokenType::OutDir))
-        // cannot actually decice the layer until the "conditions" have been parsed
+        // cannot actually decide the layer until the "conditions" have been parsed
         // and we know wther it's ipv4 or ipv6 or both (i.e inet vs inet6)
         // instead what this does is constrains the layers that are available to the conditions
         // so if it's 'out' then we only get AUTH_CONNECT_V* NOT the AUTH_RECV_V*
@@ -208,13 +179,9 @@ std::unique_ptr<RulesetNode> Parser::parse()
         while(!peek(TokenType::EndOfInput))
         {
             if(peek(TokenType::PermitAction, TokenType::BlockAction))
-            {
                 ruleset->addChild(filter());
-            }
             else
-            {
                 unexpectedTokenError();
-            }
         }
 
         return ruleset;

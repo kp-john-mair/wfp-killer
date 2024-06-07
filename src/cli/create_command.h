@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cli/cli_command.h>
+#include "cli_command.h"
 
 namespace wfpk {
 class CreateCommand final : public CliCommand

@@ -1,10 +1,10 @@
-#include <parser/lexer.h>
+#include <lexer.h>
 #include <gtest/gtest.h>
 #include <ranges>
 
 namespace views = std::ranges::views;
 using namespace wfpk;
-using enum TokenType;
+using enum wfpk::TokenType;
 
 TEST(LexerTests, TestBasicLexing)
 {

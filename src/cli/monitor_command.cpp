@@ -1,14 +1,14 @@
-#include <cli/create_command.h>
+#include "monitor_command.h"
 
 namespace wfpk {
-CreateCommand::CreateCommand(wfpk::WfpKiller *pWfpKiller)
+MonitorCommand::MonitorCommand(wfpk::WfpKiller *pWfpKiller)
 : CliCommand(pWfpKiller)
 {
-    initOptions("create", "create a WFP filter");
+    initOptions("monitor", "Monitor WFP events");
     addOption("h,help", "Display this help message.");
 }
 
-void CreateCommand::runCommand(int argc, char **argv)
+void MonitorCommand::runCommand(int argc, char **argv)
 {
     auto result = parseOptions(argc, argv);
 
@@ -18,6 +18,6 @@ void CreateCommand::runCommand(int argc, char **argv)
         return;
     }
 
-    _pWfpKiller->createFilter();
+    _pWfpKiller->monitor();
 }
 }

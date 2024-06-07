@@ -4,10 +4,12 @@ Inspect and manipulate the Windows WFP firewall.
 
 ## Build instructions
 
-* mkdir build/
-* cd build/
-* cmake ..
-* cmake --build .
+```sh
+mkdir build/
+cd build/
+cmake ..
+cmake --build .
+```
 
 ### Usage
 

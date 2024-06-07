@@ -5,10 +5,6 @@
 
 namespace wfpk {
 
-class Visitor
-{
-};
-
 class Node
 {
 protected:
@@ -18,36 +14,37 @@ protected:
 public:
     virtual ~Node() = default;
 
-    void accept(const Visitor &visitor)
-    {
-        acceptNode(visitor);
-    }
-
     void addChild(std::unique_ptr<Node> child)
     {
         _pChildren.push_back(std::move(child));
     }
 
-    auto children() -> const std::vector<std::unique_ptr<Node>>&
+    auto children() const
+        -> const std::vector<std::unique_ptr<Node>>&
     {
         return _pChildren;
     }
 
-private:
-    virtual void acceptNode(const Visitor &visitor) = 0;
+    virtual std::string toString() const { return "N/A"; }
 
 private:
     std::vector<std::unique_ptr<Node>> _pChildren;
     Token _token{EndOfInputToken};
 };
 
-class RulesetNode final : public Node
+class RulesetNode final : public Node, private OStreamTraceable<RulesetNode>
 {
 public:
     RulesetNode() = default;
 
-private:
-    virtual void acceptNode(const Visitor &visitor) override {}
+    std::string toString() const override
+    {
+        std::string result;
+        for(const auto &child : children())
+            result += std::format("{}\n", child->toString());
+
+        return result;
+    }
 };
 
 struct FilterConditions
@@ -69,7 +66,7 @@ struct FilterConditions
 // Represents no conditions be applied
 inline const FilterConditions NoFilterConditions = {};
 
-class FilterNode final : public Node
+class FilterNode final : public Node,  private OStreamTraceable<FilterNode>
 {
 public:
     enum class Action { Block, Permit };
@@ -91,50 +88,13 @@ public:
     Action action() const { return _action; }
     Layer layer() const { return _layer; }
     const FilterConditions &filterConditions() const { return _conditions; }
-private:
-    virtual void acceptNode(const Visitor &visitor) override {}
+    std::string toString() const override;
 
 private:
     Action _action{};
     Layer _layer{};
     FilterConditions _conditions;
 };
-
-inline std::ostream& operator<<(std::ostream &ostream, const FilterNode &node)
-{
-
-    ostream << enumName(node.action()) << " " << enumName(node.layer()) << " ";
-
-    auto conditions = node.filterConditions();
-
-    if(conditions == NoFilterConditions)
-    {
-        ostream << "all ";
-        return ostream;
-    }
-
-    ostream << enumName(conditions.ipVersion) << " ";
-
-    if(!conditions.sourceIp.empty() || !conditions.sourcePorts.empty())
-        ostream << "from ";
-
-    if(!conditions.sourceIp.empty())
-        ostream << conditions.sourceIp << " ";
-
-    if(!conditions.sourcePorts.empty())
-        ostream << std::format("port {{ {} }}", joinVec(conditions.sourcePorts)) << " ";
-
-    if(!conditions.destIp.empty() || !conditions.destPorts.empty())
-        ostream << "to ";
-
-    if(!conditions.destIp.empty())
-        ostream << conditions.destIp << " ";
-
-    if(!conditions.destPorts.empty())
-        ostream << std::format("port {{ {} }}", joinVec(conditions.destPorts)) << " ";
-
-    return ostream;
-}
 
 class Parser
 {
@@ -154,7 +114,6 @@ public:
     }
 
 private:
-
     template <typename... TokenTypes>
     requires (std::same_as<TokenTypes, TokenType> && ...)
     auto match(TokenTypes... types) -> std::optional<Token>

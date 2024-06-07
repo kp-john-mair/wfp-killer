@@ -43,6 +43,17 @@ private:
     inline static Singleton* _instance = nullptr;
 };
 
+template <class Derived>
+struct OStreamTraceable
+{
+public:
+    friend std::ostream& operator<<(std::ostream &ostream, const Derived &value)
+    {
+        ostream << static_cast<const Derived&>(value).toString();
+        return ostream;
+    }
+};
+
 // Given an enum value, return its name as a string
 template <typename T>
 std::string enumName(T enumValue)

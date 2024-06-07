@@ -1,4 +1,4 @@
-#include <cli/delete_command.h>
+#include "delete_command.h"
 
 namespace wfpk {
 DeleteCommand::DeleteCommand(wfpk::WfpKiller *pWfpKiller)

@@ -1,4 +1,4 @@
-#include <cli/list_command.h>
+#include "list_command.h"
 
 namespace wfpk {
 namespace

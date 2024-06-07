@@ -6,8 +6,8 @@
 #include <unordered_set>
 #include <stdexcept>
 #include <optional>
-#include <parser/lexer.h>
 #include <magic_enum.h>
+#include "lexer.h"
 
 namespace wfpk {
 // Keywords are simple lexemes with static content.

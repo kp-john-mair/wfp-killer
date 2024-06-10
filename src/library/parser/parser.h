@@ -24,6 +24,16 @@ public:
     }
 
 private:
+    void unexpectedTokenError()
+    {
+        throw ParseError{std::format("Unexpected token {}", _lookahead.description())};
+    }
+
+    // Token processing
+    // Asserts that a given token must come next and increments the cursor on success
+    // throws a ParseError on failure
+    auto match(TokenType type) -> std::optional<Token>;
+
     template <typename... TokenTypes>
     requires (std::same_as<TokenTypes, TokenType> && ...)
     auto match(TokenTypes... types) -> std::optional<Token>
@@ -33,12 +43,38 @@ private:
         return result;
     }
 
+    void mustMatch(TokenType type)
+    {
+        if(!match(type))
+            unexpectedTokenError();
+    }
+
     template <typename... TokenTypes>
-    requires (std::same_as<TokenTypes, TokenType> && ...)
+    // Restict the function to > 0 params so that it'll fall back to the other peek() overload
+    // for no args.
+    requires ((std::same_as<TokenTypes, TokenType> && ...) && (sizeof...(TokenTypes) > 0))
     auto peek(TokenTypes... types) -> bool
     {
         return (peek(types) || ...);
     }
+
+    // Consumes one token and moves the cursor
+    void consume()
+    {
+        _lookahead = _lexer.nextToken();
+    }
+
+    Token peek() const { return _lookahead; }
+    bool peek(TokenType type) { return _lookahead.type == type; }
+
+private:
+    std::unique_ptr<Node> filter();
+    FilterConditions conditions();
+    void sourceCondition(FilterConditions *conditions);
+    void destCondition(FilterConditions *conditions);
+
+    auto addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>;
+    auto numberList() -> std::vector<uint16_t>;
 
     template <typename Func_T, typename... TokenTypes>
     auto list(Func_T func, TokenTypes... tokenTypes)
@@ -73,40 +109,6 @@ private:
         }
 
         return listResults;
-    }
-
-    // Token processing
-    // Asserts that a given token must come next and increments the cursor on success
-    // throws a ParseError on failure
-    auto match(TokenType type) -> std::optional<Token>;
-
-    void mustMatch(TokenType type)
-    {
-        if(!match(type))
-            unexpectedTokenError();
-    }
-
-    // Consumes one token and moves the cursor
-    void consume()
-    {
-        _lookahead = _lexer.nextToken();
-    }
-
-    Token peek() const { return _lookahead; }
-    bool peek(TokenType type) { return _lookahead.type == type; }
-
-private:
-    std::unique_ptr<Node> filter();
-    FilterConditions conditions();
-    void sourceCondition(FilterConditions *conditions);
-    void destCondition(FilterConditions *conditions);
-
-    auto addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>;
-    auto numberList() -> std::vector<uint16_t>;
-
-    void unexpectedTokenError()
-    {
-        throw ParseError{std::format("Unexpected token {}", _lookahead.description())};
     }
 
 private:

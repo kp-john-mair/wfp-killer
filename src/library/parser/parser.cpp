@@ -11,7 +11,7 @@ auto Parser::match(TokenType type) -> std::optional<Token>
     // Save current token
     Token currentToken = _lookahead;
 
-    if(_lookahead.type == type)
+    if(peek().type == type)
     {
         if(_shouldTrace)
             std::cout << "Matched a token of type: " << tokenStr << " text: " << _lookahead.text << "\n";
@@ -29,41 +29,12 @@ auto Parser::match(TokenType type) -> std::optional<Token>
 
 auto Parser::numberList() -> std::vector<uint16_t>
 {
-
     auto results = list([](Token tok)
     {
         return static_cast<uint16_t>(std::atoi(tok.text.c_str()));
     }, TokenType::Number);
 
     return results;
-
-    // std::vector<uint16_t> numbers;
-
-    // mustMatch(TokenType::LBrack);
-    // while(true)
-    // {
-    //     if(auto tok = match(TokenType::Number))
-    //     {
-    //         numbers.push_back(static_cast<uint16_t>(std::atoi(tok->text.c_str())));
-    //         if(peek(TokenType::Comma))
-    //             consume(); // advance by one token
-    //         else if(match(TokenType::RBrack))
-    //             return numbers;
-    //         else
-    //             unexpectedTokenError();
-    //     }
-    //     // This will only trigger in the case of an empty list `{}`
-    //     else if(match(TokenType::RBrack))
-    //     {
-    //         return numbers;
-    //     }
-    //     else
-    //     {
-    //         unexpectedTokenError();
-    //     }
-    // }
-
-    // return numbers;
 }
 
 auto Parser::addressAndPorts()

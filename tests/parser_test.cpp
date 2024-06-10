@@ -8,9 +8,8 @@ using enum TokenType;
 
 TEST(ParserTests, TestBasicParsing)
 {
-    std::string input = R"(permit out from port {1, 2, 3, 4}
-                           block in from 1.1.1.1
-                       )";
+    std::string input = R"(permit out inet6 proto {udp,tcp} from port {1, 2, 3, 4}
+                           block in from 1.1.1.1)";
     Lexer lexer{input};
 
     Parser parser{lexer};

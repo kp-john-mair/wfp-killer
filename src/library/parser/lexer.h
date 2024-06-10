@@ -14,7 +14,6 @@ enum class TokenType : uint32_t
 {
     EndOfInput,
     BlockAction,
-    PermitBlockAction,
     PermitAction,
     LBrack,
     RBrack,
@@ -26,8 +25,8 @@ enum class TokenType : uint32_t
     Number,
     From,
     To,
-    Tcp,
-    Udp,
+    TcpTransport,
+    UdpTransport,
     All,
 
     // These tokens may also represent subnets

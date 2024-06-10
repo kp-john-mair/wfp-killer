@@ -5,7 +5,6 @@
 #include <utility> // for std::pair
 
 namespace wfpk {
-
 class Parser
 {
 public:
@@ -52,17 +51,15 @@ private:
     template <typename... TokenTypes>
     // Restict the function to > 0 params so that it'll fall back to the other peek() overload
     // for no args.
-    requires ((std::same_as<TokenTypes, TokenType> && ...) && (sizeof...(TokenTypes) > 0))
+    requires ((std::same_as<TokenTypes, TokenType> && ...)
+        && (sizeof...(TokenTypes) > 0))
     auto peek(TokenTypes... types) -> bool
     {
         return (peek(types) || ...);
     }
 
     // Consumes one token and moves the cursor
-    void consume()
-    {
-        _lookahead = _lexer.nextToken();
-    }
+    void consume() { _lookahead = _lexer.nextToken(); }
 
     Token peek() const { return _lookahead; }
     bool peek(TokenType type) { return _lookahead.type == type; }
@@ -74,7 +71,13 @@ private:
     void destCondition(FilterConditions *conditions);
 
     auto addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>;
+    auto transportProtocol() -> FilterConditions::TransportProtocol;
     auto numberList() -> std::vector<uint16_t>;
+    // Does not return a list - only returns one protocol type.
+    // But the protocols can be written as a list in the grammar,
+    // i.e { tcp, udp } which is a list - maps to the AllTransports enum value.
+    auto transportProtocolList() -> FilterConditions::TransportProtocol;
+
 
     template <typename Func_T, typename... TokenTypes>
     auto list(Func_T func, TokenTypes... tokenTypes)

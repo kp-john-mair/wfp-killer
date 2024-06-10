@@ -15,7 +15,10 @@ std::string FilterNode::toString() const
         return output;
     }
 
+    // Inet4 vs Inet6
     output += enumName(conditions.ipVersion) + " ";
+    // Tcp vs Udp
+    output += enumName(conditions.transportProtocol) + " ";
 
     if(!conditions.sourceIp.empty() || !conditions.sourcePorts.empty())
         output += "from ";

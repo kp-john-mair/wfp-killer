@@ -37,6 +37,52 @@ auto Parser::numberList() -> std::vector<uint16_t>
     return results;
 }
 
+// Does not return a list - only returns one protocol type.
+// But the protocols can be written as a list in the grammar,
+// i.e { tcp, udp } which is a list - maps to the AllTransports enum value.
+auto Parser::transportProtocolList()
+    -> FilterConditions::TransportProtocol
+{
+    using TransportProtocol = FilterConditions::TransportProtocol;
+
+    auto results = list([](Token tok)
+    {
+        return (tok.type == TokenType::TcpTransport ? TransportProtocol::Tcp : TransportProtocol::Udp);
+    }, TokenType::TcpTransport, TokenType::UdpTransport);
+
+    // Allow at most 2 values in list
+    if(results.size() > 2)
+        throw ParseError(std::format("Expected 2 values in transport protocol list, but got: {}", results.size()));
+
+    if(std::ranges::all_of(results, [](auto val) { return val == TransportProtocol::Tcp; }))
+        return TransportProtocol::Tcp;
+    else if(std::ranges::all_of(results, [](auto val) { return val == TransportProtocol::Udp; }))
+        return TransportProtocol::Udp;
+    // If both Tcp and Udp appear in the list, then return 'AllTransports' as we
+    // match all supported transport protocols
+    else
+        return TransportProtocol::AllTransports;
+}
+
+auto Parser::transportProtocol()
+    -> FilterConditions::TransportProtocol
+{
+    using TransportProtocol = FilterConditions::TransportProtocol;
+
+    std::vector<FilterConditions::TransportProtocol> protList;
+    if(auto tok = match(TokenType::TcpTransport, TokenType::UdpTransport))
+    {
+        return (tok->type == TokenType::TcpTransport ? TransportProtocol::Tcp :
+            TransportProtocol::Udp);
+    }
+    else if(peek(TokenType::LBrack))
+        return transportProtocolList();
+    else
+        unexpectedTokenError();
+
+    return TransportProtocol::AllTransports;;
+}
+
 auto Parser::addressAndPorts()
     -> std::pair<std::string, std::vector<uint16_t>>
 {
@@ -90,6 +136,8 @@ void Parser::destCondition(FilterConditions *pConditions)
 
 FilterConditions Parser::conditions()
 {
+    using IpVersion = FilterConditions::IpVersion;
+
     if(match(TokenType::All))
         return NoFilterConditions;
 
@@ -98,9 +146,13 @@ FilterConditions Parser::conditions()
     if(auto tok = match(TokenType::Inet4, TokenType::Inet6))
     {
         if(tok->type == TokenType::Inet4)
-            filterConditions.ipVersion = FilterConditions::Inet4;
+            filterConditions.ipVersion = IpVersion::Inet4;
         else
-            filterConditions.ipVersion = FilterConditions::Inet6;
+            filterConditions.ipVersion = IpVersion::Inet6;
+    }
+    if(match(TokenType::Proto))
+    {
+        filterConditions.transportProtocol = transportProtocol();
     }
     if(match(TokenType::From))
         sourceCondition(&filterConditions);

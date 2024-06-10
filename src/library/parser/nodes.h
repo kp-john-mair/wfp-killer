@@ -48,8 +48,8 @@ public:
 
 struct FilterConditions
 {
-    enum class IpVersion { Both, Inet4, Inet6 };
-    using enum IpVersion;
+    enum class IpVersion { BothInet4Inet6, Inet4, Inet6 };
+    enum class TransportProtocol { AllTransports, Tcp, Udp };
 
     std::vector<uint16_t> sourcePorts;
     std::vector<uint16_t> destPorts;
@@ -57,7 +57,8 @@ struct FilterConditions
     std::string sourceIp;
     std::string destIp;
     std::string interfaceName;
-    IpVersion ipVersion{IpVersion::Both};
+    IpVersion ipVersion{IpVersion::BothInet4Inet6};
+    TransportProtocol transportProtocol{TransportProtocol::AllTransports};
 
     auto operator<=>(const FilterConditions&) const = default;
 };

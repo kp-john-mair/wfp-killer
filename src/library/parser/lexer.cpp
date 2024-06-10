@@ -37,8 +37,8 @@ const std::vector<Keyword> keywords = {
     { .tokenType = TokenType::Proto, .lexeme = "proto" },
     { .tokenType = TokenType::From, .lexeme = "from" },
     { .tokenType = TokenType::To, .lexeme = "to" },
-    { .tokenType = TokenType::Tcp, .lexeme = "tcp" },
-    { .tokenType = TokenType::Udp, .lexeme = "udp" },
+    { .tokenType = TokenType::TcpTransport, .lexeme = "tcp" },
+    { .tokenType = TokenType::UdpTransport, .lexeme = "udp" },
     { .tokenType = TokenType::All, .lexeme = "all" },
     { .tokenType = TokenType::Comma, .lexeme = "," }
 };

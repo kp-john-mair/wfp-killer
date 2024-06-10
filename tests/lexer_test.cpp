@@ -15,7 +15,7 @@ TEST(LexerTests, TestBasicLexing)
 
     std::vector expected = {
         PermitAction, OutDir, Inet4, Proto, LBrack,
-        Tcp, Comma, Udp, RBrack, From, String
+        TcpTransport, Comma, UdpTransport, RBrack, From, String
     };
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
@@ -30,7 +30,7 @@ TEST(LexerTests, TestAllTokens)
 
     std::vector expected = {
         PermitAction, BlockAction, OutDir, Ipv6Address, InDir, Inet4, Inet6, Proto, LBrack,
-        Tcp, Comma, Udp, RBrack, From, String, Port, Number, Ipv4Address, All
+        TcpTransport, Comma, UdpTransport, RBrack, From, String, Port, Number, Ipv4Address, All
     };
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
@@ -46,7 +46,7 @@ TEST(LexerTests, TestIgnoresWhiteSpace)
 
     std::vector expected = {
         BlockAction, OutDir, Proto, LBrack,
-        Tcp, Comma, Udp, RBrack
+        TcpTransport, Comma, UdpTransport, RBrack
     };
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));

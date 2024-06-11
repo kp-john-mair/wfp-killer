@@ -8,15 +8,19 @@ namespace wfpk {
 class Parser
 {
 public:
-    explicit Parser(Lexer &lexer)
-    : _lexer{lexer}
+    explicit Parser(Lexer lexer)
+    : _lexer{std::move(lexer)}
+    {}
+
+    explicit Parser(std::string input)
+    : _lexer{std::move(input)}
     {}
 
 public:
     // Parse the token stream
-    std::unique_ptr<RulesetNode> parse();
+    auto parse() -> std::unique_ptr<RulesetNode>;
     // Parse the token stream with verbose tracing
-    std::unique_ptr<RulesetNode> parseTrace()
+    auto parseTrace() -> std::unique_ptr<RulesetNode>
     {
         _shouldTrace = true;
         return parse();
@@ -115,7 +119,7 @@ private:
     }
 
 private:
-    Lexer &_lexer;
+    Lexer _lexer;
     Token _lookahead{};
     bool _shouldTrace{false};
 };

@@ -64,7 +64,8 @@ int main(int argc, char** argv)
         {"list", std::make_shared<wfpk::ListCommand>(&wfpKiller)},
         {"delete", std::make_shared<wfpk::DeleteCommand>(&wfpKiller)},
         {"create", std::make_shared<wfpk::CreateCommand>(&wfpKiller)},
-        {"monitor", std::make_shared<wfpk::MonitorCommand>(&wfpKiller)}
+        {"monitor", std::make_shared<wfpk::MonitorCommand>(&wfpKiller)},
+        {"load", std::make_shared<wfpk::LoadCommand>(&wfpKiller)},
     };
 
     cxxopts::Options options{"wfpkiller", "Introspect and manipulate WFP filters"};

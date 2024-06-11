@@ -1,6 +1,18 @@
 #include <parser/nodes.h>
+#include <visitors/wfp_executor.h>
 
 namespace wfpk {
+
+void RulesetNode::accept(const WfpExecutor &visitor)
+{
+    visitor.visit(*this);
+}
+
+void FilterNode::accept(const WfpExecutor &visitor)
+{
+    visitor.visit(*this);
+}
+
 std::string FilterNode::toString() const
 {
     std::string output;

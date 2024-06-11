@@ -3,10 +3,14 @@
 #include <algorithm>
 #include <regex>
 #include <string>
+#include <fstream>
+#include <sstream>
 #include <stdlib.h>
-#include "wfp_killer.h"
-#include "wfp_ostream_helpers.h"
-#include "wfp_name_mapper.h"
+#include <wfp_killer.h>
+#include <wfp_ostream_helpers.h>
+#include <wfp_name_mapper.h>
+#include <parser/parser.h>
+
 // We only need a minimal windows.h
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -32,6 +36,20 @@ namespace
     };
 
     using Options = WfpKiller::Options;
+}
+
+void WfpKiller::loadFilters(const std::string &sourceFile)
+{
+    std::ifstream file{sourceFile};
+
+    if(!file.is_open())
+        throw std::runtime_error{std::format("Could not open file: {}", sourceFile)};
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
+    auto ast = Parser{buffer.str()}.parseTrace();
+    std::cout << "The filter is: " << *ast << std::endl;
 }
 
 // creates a dummy conditional filter that filters on the chrome app

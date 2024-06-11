@@ -58,10 +58,15 @@ inline static const Token EndOfInputToken{TokenType::EndOfInput, "EOF"};
 class Lexer
 {
 public:
-    explicit Lexer(const std::string &input)
-        : _input{input}, _currentIndex{0}
-    {
-    }
+    explicit Lexer(std::string input)
+        : _input{std::move(input)}
+        , _currentIndex{0}
+    {}
+
+    Lexer(const Lexer&) = default;
+    Lexer(Lexer&&) = default;
+    Lexer& operator=(const Lexer&) = default;
+    Lexer& operator=(Lexer&&) = default;
 
     // Return the next available token from the input
     Token nextToken();

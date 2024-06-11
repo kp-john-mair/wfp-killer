@@ -3,6 +3,9 @@
 #include <parser/lexer.h>
 
 namespace wfpk {
+// Forward declare our visitor
+class WfpExecutor;
+
 class Node
 {
 // Make it uninstantiable as it's an abstract class
@@ -11,6 +14,8 @@ protected:
 
 public:
     virtual ~Node() = default;
+
+    virtual void accept(const WfpExecutor &visitor) = 0;
 
     void addChild(std::unique_ptr<Node> child)
     {
@@ -35,6 +40,8 @@ class RulesetNode final : public Node,
 {
 public:
     RulesetNode() = default;
+
+    void accept(const WfpExecutor &visitor) override;
 
     std::string toString() const override
     {
@@ -84,6 +91,8 @@ public:
     , _conditions{conditions}
     {
     }
+
+    void accept(const WfpExecutor &visitor) override;
 
     Action action() const { return _action; }
     Layer layer() const { return _layer; }

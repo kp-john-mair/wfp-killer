@@ -50,8 +50,6 @@ void WfpKiller::loadFilters(const std::string &sourceFile)
     buffer << file.rdbuf();
 
     auto ast = Parser{buffer.str()}.parse();
-    std::cout << "The filter is: " << *ast << std::endl;
-
     WfpExecutor wfpExecutor{_engine};
 
     ast->accept(wfpExecutor);

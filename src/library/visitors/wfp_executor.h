@@ -7,7 +7,9 @@ namespace wfpk {
 class WfpExecutor
 {
 public:
-    WfpExecutor(Engine &engine) : _engine{engine} {}
+    explicit WfpExecutor(Engine &engine)
+    : _engine{engine}
+    {}
 
 public:
     void visit(const RulesetNode &ruleset) const;

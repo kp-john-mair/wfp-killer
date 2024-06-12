@@ -69,6 +69,9 @@ auto splitString(const std::string &str, char delim) -> std::vector<std::string>
 std::string ipToString(UINT32 ipAddress);
 // Ipv6 - Ensure we get an array of UINT8[16] - prevent decay to pointer
 std::string ipToString(const UINT8 (&ipAddress)[16]);
+// Convert a string to an ipv4 address (host order)
+uint32_t stringToIp4(const std::string &addressStr);
+
 // blobs here represent appIds
 std::string blobToString(const FWP_BYTE_BLOB &blob);
 // Convert a std::wstring to a std::string

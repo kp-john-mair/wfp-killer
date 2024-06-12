@@ -1,4 +1,5 @@
 #include <visitors/wfp_executor.h>
+#include <utils.h>
 
 namespace wfpk {
 void WfpExecutor::visit(const RulesetNode &ruleset) const
@@ -9,6 +10,8 @@ void WfpExecutor::visit(const RulesetNode &ruleset) const
 
 void WfpExecutor::visit(const FilterNode &filterNode) const
 {
+    std::cout << "Adding rule: " << filterNode << std::endl;
+
     FWPM_FILTER filter{};
     std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(PIA_PROVIDER_KEY)};
 
@@ -34,7 +37,50 @@ void WfpExecutor::visit(const FilterNode &filterNode) const
     else if(filterNode.action() == FilterNode::Action::Block)
         filter.action.type = FWP_ACTION_BLOCK;
 
+    const auto filterConditions = filterNode.filterConditions();
 
+    if(filterConditions == wfpk::NoFilterConditions)
+    {
+        filter.filterCondition = nullptr;
+        filter.numFilterConditions = 0;
 
+        _engine.add(filter);
+    }
+    else
+    {
+        for(const auto &addressStr : filterConditions.destIps)
+        {
+            // Add a condition for an application id constraint
+            FWPM_FILTER_CONDITION condition{};
+            FWP_V4_ADDR_AND_MASK addressWithMask;
+
+            if(std::ranges::find(addressStr, '/') != addressStr.end())
+            {
+                auto parts = splitString(addressStr, '/');
+                uint32_t address = stringToIp4(parts.front());
+                uint32_t prefix = atoi(parts.back().c_str());
+
+                addressWithMask.addr = address;
+                addressWithMask.mask = ~0UL << (32 - prefix);
+            }
+            else
+            {
+                uint32_t address = stringToIp4(addressStr);
+                addressWithMask.addr = address;
+                // /32 subnet contains all 1s
+                addressWithMask.mask = ~0UL;
+            }
+
+            condition.fieldKey = FWPM_CONDITION_IP_REMOTE_ADDRESS;
+            condition.matchType = FWP_MATCH_EQUAL;
+            condition.conditionValue.type = FWP_V4_ADDR_MASK;
+            condition.conditionValue.v4AddrMask = &addressWithMask;
+
+            filter.filterCondition = &condition;
+            filter.numFilterConditions = 1;
+
+            _engine.add(filter);
+        }
+    }
 }
 }

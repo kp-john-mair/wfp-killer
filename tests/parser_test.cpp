@@ -5,6 +5,16 @@
 namespace views = std::ranges::views;
 using namespace wfpk;
 
+namespace {
+auto filterConditionsFor(std::string input)
+    -> FilterConditions
+{
+    auto tree = Parser{input}.parse();
+    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    return rule->filterConditions();
+}
+}
+
 TEST(ParserTests, TestBasicParsingSingleRule)
 {
     std::string input = R"(permit out all)";
@@ -79,6 +89,33 @@ TEST(ParserTests, TestSourceIpList)
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
     ASSERT_EQ(rule->layer(), FilterNode::Layer::AUTH_CONNECT_V4);
     ASSERT_EQ(conditions.sourceIps, (std::vector<std::string>{"192.168.0.0/16", "10.0.0.0/8"}));
+}
+
+TEST(ParserTests, TestTransportProtocol)
+{
+    // UDP only
+    auto conditions = filterConditionsFor("permit out proto udp");
+    ASSERT_EQ(conditions.transportProtocol, FilterConditions::TransportProtocol::Udp);
+    // TCP only
+    conditions = filterConditionsFor("permit out proto tcp");
+    ASSERT_EQ(conditions.transportProtocol, FilterConditions::TransportProtocol::Tcp);
+    // Both UDP and TCP
+    conditions = filterConditionsFor("permit out proto {tcp, udp}");
+    ASSERT_EQ(conditions.transportProtocol, FilterConditions::TransportProtocol::AllTransports);
+    // Both UDP
+    conditions = filterConditionsFor("permit out proto {udp, udp}");
+    ASSERT_EQ(conditions.transportProtocol, FilterConditions::TransportProtocol::Udp);
+    // Both TCP
+    conditions = filterConditionsFor("permit out proto {tcp, tcp}");
+    ASSERT_EQ(conditions.transportProtocol, FilterConditions::TransportProtocol::Tcp);
+}
+
+TEST(ParserTests, TestErrorsForTransportProtocol)
+{
+    // Only allowed 2 elements max
+    auto tree = Parser{"permit out proto {udp, tcp, udp}"}.parse();
+    // the unique_ptr will be null - since parse failed, instead we trace an error
+    ASSERT_EQ(tree == nullptr, true);
 }
 
 int main(int argc, char** argv)

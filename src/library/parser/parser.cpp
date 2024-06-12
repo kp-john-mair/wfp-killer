@@ -224,12 +224,12 @@ std::unique_ptr<RulesetNode> Parser::parse()
     catch(const std::exception &ex)
     {
         std::cerr << "Failed to parse: " << ex.what();
-        return ruleset;
+        return {};
     }
     catch(...)
     {
         std::cerr << "Failed to parse: Unknown error";
-        return ruleset;
+        return {};
     }
 }
 }

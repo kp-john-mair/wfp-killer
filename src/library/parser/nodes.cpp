@@ -32,20 +32,20 @@ std::string FilterNode::toString() const
     // Tcp vs Udp
     output += enumName(conditions.transportProtocol) + " ";
 
-    if(!conditions.sourceIp.empty() || !conditions.sourcePorts.empty())
+    if(!conditions.sourceIps.empty() || !conditions.sourcePorts.empty())
         output += "from ";
 
-    if(!conditions.sourceIp.empty())
-        output += conditions.sourceIp + " ";
+    if(!conditions.sourceIps.empty())
+        output += joinVec(conditions.sourceIps) + " ";
 
     if(!conditions.sourcePorts.empty())
         output += std::format("port {{ {} }}", joinVec(conditions.sourcePorts)) + " ";
 
-    if(!conditions.destIp.empty() || !conditions.destPorts.empty())
+    if(!conditions.destIps.empty() || !conditions.destPorts.empty())
         output += "to ";
 
-    if(!conditions.destIp.empty())
-        output += conditions.destIp + " ";
+    if(!conditions.destIps.empty())
+        output += joinVec(conditions.destIps) + " ";
 
     if(!conditions.destPorts.empty())
         output += std::format("port {{ {} }}", joinVec(conditions.destPorts)) + " ";

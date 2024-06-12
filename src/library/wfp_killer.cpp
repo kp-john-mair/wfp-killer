@@ -10,6 +10,7 @@
 #include <wfp_ostream_helpers.h>
 #include <wfp_name_mapper.h>
 #include <parser/parser.h>
+#include <visitors/wfp_executor.h>
 
 // We only need a minimal windows.h
 #define WIN32_LEAN_AND_MEAN
@@ -48,8 +49,12 @@ void WfpKiller::loadFilters(const std::string &sourceFile)
     std::stringstream buffer;
     buffer << file.rdbuf();
 
-    auto ast = Parser{buffer.str()}.parseTrace();
+    auto ast = Parser{buffer.str()}.parse();
     std::cout << "The filter is: " << *ast << std::endl;
+
+    WfpExecutor wfpExecutor{_engine};
+
+    ast->accept(wfpExecutor);
 }
 
 // creates a dummy conditional filter that filters on the chrome app

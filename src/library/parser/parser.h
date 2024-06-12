@@ -74,9 +74,10 @@ private:
     void sourceCondition(FilterConditions *conditions);
     void destCondition(FilterConditions *conditions);
 
-    auto addressAndPorts() -> std::pair<std::string, std::vector<uint16_t>>;
+    auto addressAndPorts() -> std::pair<std::vector<std::string>, std::vector<uint16_t>>;
     auto transportProtocol() -> FilterConditions::TransportProtocol;
     auto numberList() -> std::vector<uint16_t>;
+    auto ipList() -> std::vector<std::string>;
     // Does not return a list - only returns one protocol type.
     // But the protocols can be written as a list in the grammar,
     // i.e { tcp, udp } which is a list - maps to the AllTransports enum value.

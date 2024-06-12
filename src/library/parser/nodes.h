@@ -61,8 +61,8 @@ struct FilterConditions
     std::vector<uint16_t> sourcePorts;
     std::vector<uint16_t> destPorts;
     std::string sourceApp;
-    std::string sourceIp;
-    std::string destIp;
+    std::vector<std::string> sourceIps;
+    std::vector<std::string> destIps;
     std::string interfaceName;
     IpVersion ipVersion{IpVersion::BothInet4Inet6};
     TransportProtocol transportProtocol{TransportProtocol::AllTransports};

@@ -37,6 +37,16 @@ auto Parser::numberList() -> std::vector<uint16_t>
     return results;
 }
 
+auto Parser::ipList() -> std::vector<std::string>
+{
+    auto results = list([](Token tok)
+    {
+        return tok.text;
+    }, TokenType::Ipv4Address, TokenType::Ipv6Address);
+
+    return results;
+}
+
 // Does not return a list - only returns one protocol type.
 // But the protocols can be written as a list in the grammar,
 // i.e { tcp, udp } which is a list - maps to the AllTransports enum value.
@@ -84,13 +94,15 @@ auto Parser::transportProtocol()
 }
 
 auto Parser::addressAndPorts()
-    -> std::pair<std::string, std::vector<uint16_t>>
+    -> std::pair<std::vector<std::string>, std::vector<uint16_t>>
 {
-    std::string address;
+    std::vector<std::string> addresses;
     std::vector<uint16_t> ports;
 
     if(auto tok = match(TokenType::Ipv4Address, TokenType::Ipv6Address))
-        address = tok->text;
+        addresses.push_back(tok->text);
+    else if(peek(TokenType::LBrack))
+        addresses = ipList();
 
     if(match(TokenType::Port))
     {
@@ -102,10 +114,10 @@ auto Parser::addressAndPorts()
            unexpectedTokenError();
     }
 
-    if(address.empty() && ports.empty())
+    if(addresses.empty() && ports.empty())
         throw ParseError{"Either an ip address or a port is needed."};
 
-    return {address, std::move(ports)};
+    return {addresses, std::move(ports)};
 }
 
 void Parser::sourceCondition(FilterConditions *pConditions)
@@ -120,17 +132,17 @@ void Parser::sourceCondition(FilterConditions *pConditions)
         return;
     }
 
-    const auto &[address, ports] = addressAndPorts();
+    const auto &[addresses, ports] = addressAndPorts();
 
-    pConditions->sourceIp = address;
+    pConditions->sourceIps = addresses;
     pConditions->sourcePorts = std::move(ports);
 }
 
 void Parser::destCondition(FilterConditions *pConditions)
 {
-    const auto &[address, ports] = addressAndPorts();
+    const auto &[addresses, ports] = addressAndPorts();
 
-    pConditions->destIp = address;
+    pConditions->destIps = addresses;
     pConditions->destPorts = std::move(ports);
 }
 
@@ -181,7 +193,7 @@ std::unique_ptr<Node> Parser::filter()
         // so if it's 'out' then we only get AUTH_CONNECT_V* NOT the AUTH_RECV_V*
         layer = FilterNode::AUTH_CONNECT_V4;
     else if(match(TokenType::InDir))
-        layer = FilterNode::AUTH_CONNECT_V4;
+        layer = FilterNode::AUTH_RECV_V4;
     else
         unexpectedTokenError();
 

@@ -113,7 +113,7 @@ TEST(ParserTests, TestTransportProtocol)
 TEST(ParserTests, TestErrorsForTransportProtocol)
 {
     // Only allowed 2 elements max
-    auto tree = Parser{"permit out proto {udp, tcp, udp}"}.parse();
+    auto tree = Parser{"permit out proto {udp, tcp, udp}"}.parseTrace();
     // the unique_ptr will be null - since parse failed, instead we trace an error
     ASSERT_EQ(tree == nullptr, true);
 }

@@ -1,12 +1,10 @@
 #include <parser/parser.h>
 
 namespace wfpk {
-
 auto Parser::match(TokenType type) -> std::optional<Token>
 {
-    std::string tokenStr{enumName(type)};
     if(_shouldTrace)
-        std::cout << "Looking for a token of type: " << tokenStr << "\n";
+        std::cout << "Looking for a token of type: " << enumName(type) << "\n";
 
     // Save current token
     Token currentToken = _lookahead;
@@ -14,7 +12,7 @@ auto Parser::match(TokenType type) -> std::optional<Token>
     if(peek().type == type)
     {
         if(_shouldTrace)
-            std::cout << "Matched a token of type: " << tokenStr << " text: " << _lookahead.text << "\n";
+            std::cout << "Matched a token of type: " << currentToken << "\n";
 
         // Move the input to the next token
         consume();
@@ -62,7 +60,7 @@ auto Parser::transportProtocolList()
 
     // Allow at most 2 values in list
     if(results.size() > 2)
-        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {}", results.size()));
+        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} @ {}", results.size(), sourceLocation().toString()));
 
     if(std::ranges::all_of(results, [](auto val) { return val == TransportProtocol::Tcp; }))
         return TransportProtocol::Tcp;
@@ -115,14 +113,13 @@ auto Parser::addressAndPorts()
     }
 
     if(addresses.empty() && ports.empty())
-        throw ParseError{"Either an ip address or a port is needed."};
+        throw ParseError{std::format("Either an ip address or a port is needed, @ {}", sourceLocation().toString())};
 
     return {addresses, std::move(ports)};
 }
 
 void Parser::sourceCondition(FilterConditions *pConditions)
 {
-
     if(auto tok = match(TokenType::String))
     {
         pConditions->sourceApp = tok->text;

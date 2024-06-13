@@ -56,6 +56,7 @@ public:
 
 // Given an enum value, return its name as a string
 template <typename T>
+    requires std::is_enum_v<T>
 std::string enumName(T enumValue)
 {
     return std::string{magic_enum::enum_name(enumValue)};

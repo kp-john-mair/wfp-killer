@@ -47,13 +47,12 @@ const std::vector<Keyword> keywords = {
 const std::unordered_set<char> allowedIdentSymbols = { ':', '.', '/' };
 }
 
-std::string Token::description() const
+SourceLocation Lexer::calcSourceLocation(const std::string &lexeme) const
 {
-    const auto name = enumName(type);
-    if(text.empty())
-        return name;
-    else
-        return std::format("{}({})", name, text);
+    uint32_t line = _sourceLocation.line;
+    uint32_t col = _sourceLocation.column - lexeme.length();
+
+    return {line, col};
 }
 
 std::string Lexer::identifierString()
@@ -63,7 +62,7 @@ std::string Lexer::identifierString()
     // Identifiers are alphanumeric + additional allowed symbols used by special identifiers
     // such as ip subnets - so '.' and ':' and '/' are allowed too.
     while(_currentIndex < _input.length() && (std::isalnum(peek()) || allowedIdentSymbols.contains(peek())))
-        _currentIndex++;
+        advance();
 
     return _input.substr(start, _currentIndex - start);
 }
@@ -80,9 +79,9 @@ std::string Lexer::identifierString()
     if(itKeyword != keywords.end())
     {
         // Increment index by lexeme length
-        _currentIndex += itKeyword->length();
+        advance(itKeyword->length());
         // Create a token for the lexeme and return it
-        return Token{itKeyword->tokenType, itKeyword->lexeme};
+        return Token{itKeyword->tokenType, itKeyword->lexeme, calcSourceLocation(itKeyword->lexeme)};
     }
     else
     {
@@ -92,24 +91,46 @@ std::string Lexer::identifierString()
 
 Token Lexer::string()
 {
-    ++_currentIndex; // skip over initial ""
+    advance(); // skip over initial ""
     size_t start = _currentIndex;
     while(_currentIndex < _input.length() && peek() != '"')
-        ++_currentIndex;
+    {
+        updateLineNumber();
+        advance();
+    }
 
     std::string content = _input.substr(start, _currentIndex - start);
 
     // Skip closing "
-    ++_currentIndex;
+    advance();
 
-    return {TokenType::String, content};
+    return {TokenType::String, content, calcSourceLocation(content)};
+}
+
+void Lexer::updateLineNumber()
+{
+    if(peek() == '\n')
+    {
+        _sourceLocation.line += 1;
+        // Reset the column on a newline
+        _sourceLocation.column = 1;
+    }
+}
+
+void Lexer::advance(size_t increment)
+{
+    _currentIndex += increment;
+    _sourceLocation.column += increment;
 }
 
 void Lexer::skipWhitespace()
 {
     // Eat up all whitespace between lexemes
     while(_currentIndex < _input.length() && std::isspace(peek()))
-        ++_currentIndex;
+    {
+        updateLineNumber();
+        advance();
+    }
 }
 
 std::vector<Token> Lexer::allTokens()
@@ -131,20 +152,20 @@ Token Lexer::ipAddressAndSubnet(const std::string &addressAndSubnet, size_t pos)
     uint32_t subnetValue = static_cast<uint32_t>(std::atoi(subnet.c_str()));
 
     if(subnetValue == 0)
-        throw ParseError{std::format("Got an invalid 0 prefix for {}", address)};
+        throw ParseError{std::format("Got an invalid 0 prefix for {} @ {}", addressAndSubnet, _sourceLocation.toString())};
 
     if(isIpv6(address) && subnetValue <= 128)
-        return Token{TokenType::Ipv6Address, std::format("{}/{}", address, subnet)};
+        return Token{TokenType::Ipv6Address, std::format("{}/{}", address, subnet), calcSourceLocation(addressAndSubnet)};
     else if(isIpv4(address) && subnetValue <= 32)
-        return Token{TokenType::Ipv4Address, std::format("{}/{}", address, subnet)};
+        return Token{TokenType::Ipv4Address, std::format("{}/{}", address, subnet), calcSourceLocation(addressAndSubnet)};
 
-    throw ParseError{std::format("Invalid ip address and subnet: {}/{}", address, subnet)};
+    throw ParseError{std::format("Invalid ip address and subnet: {} @ {}", addressAndSubnet, _sourceLocation.toString())};
 }
 
 Token Lexer::nextToken() {
     // End of input
     if(_currentIndex >= _input.length())
-        return EndOfInputToken;
+        return endOfInputToken();
 
     // Eat up spaces, tabs, newlines
     skipWhitespace();
@@ -156,7 +177,7 @@ Token Lexer::nextToken() {
     // then skipWhitespace will go right to the last char, meaning the next char will be
     // the null byte
     case '\0':
-        return EndOfInputToken;
+        return endOfInputToken();
     case '"':
        return string();
     default:
@@ -176,14 +197,14 @@ Token Lexer::nextToken() {
              return ipAddressAndSubnet(ident, pos);
 
         if(isIpv6(ident))
-            return {TokenType::Ipv6Address, ident};
+            return {TokenType::Ipv6Address, ident, calcSourceLocation(ident)};
         else if(isIpv4(ident))
-            return {TokenType::Ipv4Address, ident};
+            return {TokenType::Ipv4Address, ident, calcSourceLocation(ident)};
         else if(std::ranges::all_of(ident, isdigit))
-            return {TokenType::Number, ident};
+            return {TokenType::Number, ident, calcSourceLocation(ident)};
 
         // Anything else - not supported.
-        throw ParseError{std::format("Unrecognized identifier: '{}'!", ident)};
+        throw ParseError{std::format("Unrecognized identifier: '{}'! @ {}", ident, _sourceLocation.toString())};
     }
     }
 }

@@ -29,7 +29,7 @@ public:
 private:
     void unexpectedTokenError()
     {
-        throw ParseError{std::format("Unexpected token {}", _lookahead.description())};
+        throw ParseError{std::format("Unexpected token {}", _lookahead.toString())};
     }
 
     // Token processing
@@ -67,6 +67,7 @@ private:
 
     Token peek() const { return _lookahead; }
     bool peek(TokenType type) { return _lookahead.type == type; }
+    SourceLocation sourceLocation() const { return peek().sourceLocation; }
 
 private:
     std::unique_ptr<Node> filter();
@@ -80,7 +81,7 @@ private:
     auto ipList() -> std::vector<std::string>;
     // Does not return a list - only returns one protocol type.
     // But the protocols can be written as a list in the grammar,
-    // i.e { tcp, udp } which is a list - maps to the AllTransports enum value.
+    // i.e { tcp, udp } and it maps to the AllTransports enum value.
     auto transportProtocolList() -> FilterConditions::TransportProtocol;
 
 

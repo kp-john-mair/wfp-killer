@@ -32,7 +32,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<Node>> _pChildren;
-    Token _token{EndOfInputToken};
+    Token _token{};
 };
 
 class RulesetNode final : public Node,

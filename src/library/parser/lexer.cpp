@@ -50,6 +50,9 @@ const std::unordered_set<char> allowedIdentSymbols = { ':', '.', '/' };
 SourceLocation Lexer::calcSourceLocation(const std::string &lexeme) const
 {
     uint32_t line = _sourceLocation.line;
+
+    // The 'column' for a given lexeme is the column at the start of that lexeme, so
+    // subtract the lexeme length to find the start.
     uint32_t col = _sourceLocation.column - lexeme.length();
 
     return {line, col};
@@ -61,8 +64,11 @@ std::string Lexer::identifierString()
 
     // Identifiers are alphanumeric + additional allowed symbols used by special identifiers
     // such as ip subnets - so '.' and ':' and '/' are allowed too.
-    while(_currentIndex < _input.length() && (std::isalnum(peek()) || allowedIdentSymbols.contains(peek())))
+    while(_currentIndex < _input.length() &&
+        (std::isalnum(peek()) || allowedIdentSymbols.contains(peek())))
+    {
         advance();
+    }
 
     return _input.substr(start, _currentIndex - start);
 }
@@ -81,7 +87,8 @@ std::string Lexer::identifierString()
         // Increment index by lexeme length
         advance(itKeyword->length());
         // Create a token for the lexeme and return it
-        return Token{itKeyword->tokenType, itKeyword->lexeme, calcSourceLocation(itKeyword->lexeme)};
+        return Token{itKeyword->tokenType, itKeyword->lexeme,
+            calcSourceLocation(itKeyword->lexeme)};
     }
     else
     {
@@ -111,6 +118,7 @@ void Lexer::updateLineNumber()
 {
     if(peek() == '\n')
     {
+        // Increment line number
         _sourceLocation.line += 1;
         // Reset the column on a newline
         _sourceLocation.column = 1;
@@ -152,14 +160,18 @@ Token Lexer::ipAddressAndSubnet(const std::string &addressAndSubnet, size_t pos)
     uint32_t subnetValue = static_cast<uint32_t>(std::atoi(subnet.c_str()));
 
     if(subnetValue == 0)
-        throw ParseError{std::format("Got an invalid 0 prefix for {} @ {}", addressAndSubnet, _sourceLocation.toString())};
+        throw ParseError{std::format("Got an invalid 0 prefix for {} @ {}",
+            addressAndSubnet, calcSourceLocation(subnet).toString())};
 
     if(isIpv6(address) && subnetValue <= 128)
-        return Token{TokenType::Ipv6Address, std::format("{}/{}", address, subnet), calcSourceLocation(addressAndSubnet)};
+        return Token{TokenType::Ipv6Address, std::format("{}/{}", address, subnet),
+            calcSourceLocation(addressAndSubnet)};
     else if(isIpv4(address) && subnetValue <= 32)
-        return Token{TokenType::Ipv4Address, std::format("{}/{}", address, subnet), calcSourceLocation(addressAndSubnet)};
+        return Token{TokenType::Ipv4Address, std::format("{}/{}", address, subnet),
+            calcSourceLocation(addressAndSubnet)};
 
-    throw ParseError{std::format("Invalid ip address and subnet: {} @ {}", addressAndSubnet, _sourceLocation.toString())};
+    throw ParseError{std::format("Invalid ip address and subnet: {} @ {}",
+        addressAndSubnet, calcSourceLocation(addressAndSubnet).toString())};
 }
 
 Token Lexer::nextToken() {
@@ -204,7 +216,8 @@ Token Lexer::nextToken() {
             return {TokenType::Number, ident, calcSourceLocation(ident)};
 
         // Anything else - not supported.
-        throw ParseError{std::format("Unrecognized identifier: '{}'! @ {}", ident, _sourceLocation.toString())};
+        throw ParseError{std::format("Unrecognized identifier: '{}'! @ {}", ident,
+            calcSourceLocation(ident).toString())};
     }
     }
 }

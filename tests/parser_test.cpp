@@ -40,7 +40,7 @@ TEST(ParserTests, TestBasicParsingMultipleRules)
 
     Parser parser{input};
 
-    auto tree = parser.parse();
+    auto tree = parser.parseTrace();
     const auto rule1 = static_cast<FilterNode*>(tree->children()[0].get());
     const auto rule2 = static_cast<FilterNode*>(tree->children()[1].get());
     const auto rule3 = static_cast<FilterNode*>(tree->children()[2].get());

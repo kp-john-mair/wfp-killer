@@ -53,6 +53,10 @@ auto Parser::transportProtocolList()
 {
     using TransportProtocol = FilterConditions::TransportProtocol;
 
+    // Saving this in case we get an error and we need to point to the start
+    // of the list
+    const auto prevSourceLocation = sourceLocation();
+
     auto results = list([](Token tok)
     {
         return (tok.type == TokenType::TcpTransport ? TransportProtocol::Tcp : TransportProtocol::Udp);
@@ -60,7 +64,7 @@ auto Parser::transportProtocolList()
 
     // Allow at most 2 values in list
     if(results.size() > 2)
-        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} @ {}", results.size(), sourceLocation().toString()));
+        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} @ {}", results.size(), prevSourceLocation.toString()));
 
     if(std::ranges::all_of(results, [](auto val) { return val == TransportProtocol::Tcp; }))
         return TransportProtocol::Tcp;

@@ -46,7 +46,7 @@ struct SourceLocation
 
     std::string toString() const
     {
-        return std::format("(line:{}, col:{})", line, column);
+        return std::format("({},{})", line, column);
     }
 };
 

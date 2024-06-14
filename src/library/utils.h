@@ -72,7 +72,8 @@ std::string ipToString(UINT32 ipAddress);
 std::string ipToString(const UINT8 (&ipAddress)[16]);
 // Convert a string to an ipv4 address (host order)
 uint32_t stringToIp4(const std::string &addressStr);
-
+// Convert a string to an ipv6 address
+struct in6_addr stringToIp6(const std::string& addressStr);
 // blobs here represent appIds
 std::string blobToString(const FWP_BYTE_BLOB &blob);
 // Convert a std::wstring to a std::string
@@ -103,6 +104,18 @@ std::string joinVec(const std::vector<T>& ports) {
     }
 
     return oss.str();
+}
+
+template <typename T>
+auto concatVec(const std::vector<T> &vec1, const std::vector<T> &vec2)
+    -> std::vector<T>
+{
+    std::vector<T> newVec;
+    newVec.reserve(vec1.size() + vec2.size());
+    newVec.insert(newVec.end(), vec1.begin(), vec1.end());
+    newVec.insert(newVec.end(), vec2.begin(), vec2.end());
+
+    return newVec;
 }
 
 // void fwpConditionValueHandler(const FWP_CONDITION_VALUE &value, auto handlerFunc)

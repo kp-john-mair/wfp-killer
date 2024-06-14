@@ -10,6 +10,9 @@ void WfpExecutor::visit(const RulesetNode &ruleset) const
 
 void WfpExecutor::visit(const FilterNode &filterNode) const
 {
+    using Action = FilterNode::Action;
+    using Direction = FilterNode::Direction;
+
     std::cout << "Adding rule: " << filterNode << std::endl;
 
     FWPM_FILTER filter{};
@@ -23,14 +26,10 @@ void WfpExecutor::visit(const FilterNode &filterNode) const
     filter.weight.uint8 = 10;
     filter.displayData = pProvider->displayData;
 
-    if(filterNode.layer() == FilterNode::Layer::AUTH_CONNECT_V4)
+    if(filterNode.direction() == Direction::Out)
         filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
-    else if(filterNode.layer() == FilterNode::Layer::AUTH_CONNECT_V6)
-        filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V6;
-    else if(filterNode.layer() == FilterNode::Layer::AUTH_RECV_V4)
+    else if(filterNode.direction() == Direction::In)
         filter.layerKey = FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4;
-    else if(filterNode.layer() == FilterNode::Layer::AUTH_RECV_V6)
-        filter.layerKey = FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6;
 
     if(filterNode.action() == FilterNode::Action::Permit)
         filter.action.type = FWP_ACTION_PERMIT;
@@ -44,11 +43,11 @@ void WfpExecutor::visit(const FilterNode &filterNode) const
         filter.filterCondition = nullptr;
         filter.numFilterConditions = 0;
 
-        _engine.add(filter);
+        //_engine.add(filter);
     }
     else
     {
-        for(const auto &addressStr : filterConditions.destIps)
+        for(const auto &addressStr : filterConditions.destIps.v4)
         {
             // Add a condition for an application id constraint
             FWPM_FILTER_CONDITION condition{};
@@ -79,7 +78,7 @@ void WfpExecutor::visit(const FilterNode &filterNode) const
             filter.filterCondition = &condition;
             filter.numFilterConditions = 1;
 
-            _engine.add(filter);
+            //_engine.add(filter);
         }
     }
 }

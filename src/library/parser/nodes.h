@@ -6,6 +6,20 @@ namespace wfpk {
 // Forward declare our visitor
 class WfpExecutor;
 
+// Stores a collection of ipv4 and ipv6 addresses
+struct IpAddresses
+{
+    std::vector<std::string> v4;
+    std::vector<std::string> v6;
+
+    bool empty() const
+    {
+        return v4.empty() && v6.empty();
+    }
+
+    auto operator<=>(const IpAddresses&) const = default;
+};
+
 class Node
 {
 // Make it uninstantiable as it's an abstract class
@@ -61,11 +75,11 @@ struct FilterConditions
     std::vector<uint16_t> sourcePorts;
     std::vector<uint16_t> destPorts;
     std::string sourceApp;
-    std::vector<std::string> sourceIps;
-    std::vector<std::string> destIps;
+    IpAddresses sourceIps;
+    IpAddresses destIps;
     std::string interfaceName;
-    IpVersion ipVersion{IpVersion::BothInet4Inet6};
-    TransportProtocol transportProtocol{TransportProtocol::AllTransports};
+    IpVersion ipVersion{};
+    TransportProtocol transportProtocol{};
 
     auto operator<=>(const FilterConditions&) const = default;
 };
@@ -76,18 +90,12 @@ inline const FilterConditions NoFilterConditions = {};
 class FilterNode final : public Node,  private OStreamTraceable<FilterNode>
 {
 public:
-    enum class Action { Block, Permit };
-    using enum Action;
+    enum class Action { Invalid, Block, Permit };
+    enum class Direction { Invalid, Out, In };
 
-    enum class Layer { AUTH_CONNECT_V4,
-                       AUTH_RECV_V4,
-                       AUTH_CONNECT_V6,
-                       AUTH_RECV_V6 };
-    using enum Layer;
-
-    FilterNode(Action action, Layer layer, FilterConditions conditions)
+    FilterNode(Action action, Direction direction, FilterConditions conditions)
     : _action{action}
-    , _layer{layer}
+    , _direction{direction}
     , _conditions{conditions}
     {
     }
@@ -95,13 +103,13 @@ public:
     void accept(const WfpExecutor &visitor) override;
 
     Action action() const { return _action; }
-    Layer layer() const { return _layer; }
+    Direction direction() const { return _direction; }
     const FilterConditions &filterConditions() const { return _conditions; }
     std::string toString() const override;
 
 private:
     Action _action{};
-    Layer _layer{};
+    Direction _direction{};
     FilterConditions _conditions{NoFilterConditions};
 };
 

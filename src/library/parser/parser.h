@@ -5,6 +5,7 @@
 #include <utility> // for std::pair
 
 namespace wfpk {
+
 class Parser
 {
 public:
@@ -75,15 +76,14 @@ private:
     void sourceCondition(FilterConditions *conditions);
     void destCondition(FilterConditions *conditions);
 
-    auto addressAndPorts() -> std::pair<std::vector<std::string>, std::vector<uint16_t>>;
+    auto addressAndPorts() -> std::pair<IpAddresses, std::vector<uint16_t>>;
     auto transportProtocol() -> FilterConditions::TransportProtocol;
     auto numberList() -> std::vector<uint16_t>;
-    auto ipList() -> std::vector<std::string>;
+    auto ipList() -> IpAddresses;
     // Does not return a list - only returns one protocol type.
     // But the protocols can be written as a list in the grammar,
     // i.e { tcp, udp } and it maps to the AllTransports enum value.
     auto transportProtocolList() -> FilterConditions::TransportProtocol;
-
 
     template <typename Func_T, typename... TokenTypes>
     auto list(Func_T func, TokenTypes... tokenTypes)
@@ -92,32 +92,37 @@ private:
         using ReturnType = std::invoke_result_t<Func_T, Token>;
         std::vector<ReturnType> listResults;
 
+        listForEach([&](Token tok) {
+            listResults.push_back(func(tok));
+        }, tokenTypes...);
+
+        return listResults;
+    }
+
+    template <typename Func_T, typename... TokenTypes>
+    void listForEach(Func_T func, TokenTypes... tokenTypes)
+    {
         mustMatch(TokenType::LBrack);
         while(true)
         {
             if(auto tok = match(tokenTypes...))
             {
-                ReturnType result = func(*tok);
-                listResults.push_back(result);
+                func(*tok);
                 if(peek(TokenType::Comma))
                     consume(); // advance by one token
                 else if(match(TokenType::RBrack))
-                    return listResults;
+                    return;
                 else
                     unexpectedTokenError();
             }
             // This will only trigger in the case of an empty list `{}`
             else if(match(TokenType::RBrack))
-            {
-                return listResults;
-            }
+                return;
             else
-            {
                 unexpectedTokenError();
-            }
         }
 
-        return listResults;
+        return;
     }
 
 private:

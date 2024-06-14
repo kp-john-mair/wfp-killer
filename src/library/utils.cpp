@@ -33,6 +33,13 @@ uint32_t stringToIp4(const std::string &addressStr)
     return ntohl(address);
 }
 
+struct in6_addr stringToIp6(const std::string& addressStr)
+{
+    struct in6_addr address{};
+    InetPtonA(AF_INET6, addressStr.c_str(), &address);
+    return address;
+}
+
 // Ipv6
 std::string ipToString(const UINT8 (&ipAddress)[16])
 {

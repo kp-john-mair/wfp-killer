@@ -17,7 +17,7 @@ std::string FilterNode::toString() const
 {
     std::string output;
 
-    output += enumName(action()) + " " + enumName(layer()) + " ";
+    output += enumName(action()) + " " + enumName(direction()) + " ";
 
     auto conditions = filterConditions();
 
@@ -36,7 +36,10 @@ std::string FilterNode::toString() const
         output += "from ";
 
     if(!conditions.sourceIps.empty())
-        output += joinVec(conditions.sourceIps) + " ";
+    {
+        const auto& combinedSourceIps = concatVec(conditions.sourceIps.v4, conditions.sourceIps.v6);
+        output += joinVec(combinedSourceIps) + " ";
+    }
 
     if(!conditions.sourcePorts.empty())
         output += std::format("port {{ {} }}", joinVec(conditions.sourcePorts)) + " ";
@@ -45,7 +48,10 @@ std::string FilterNode::toString() const
         output += "to ";
 
     if(!conditions.destIps.empty())
-        output += joinVec(conditions.destIps) + " ";
+    {
+        const auto& combinedDestIps = concatVec(conditions.destIps.v4, conditions.destIps.v6);
+        output += joinVec(combinedDestIps) + " ";
+    }
 
     if(!conditions.destPorts.empty())
         output += std::format("port {{ {} }}", joinVec(conditions.destPorts)) + " ";

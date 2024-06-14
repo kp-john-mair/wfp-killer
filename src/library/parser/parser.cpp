@@ -1,6 +1,21 @@
 #include <parser/parser.h>
 
 namespace wfpk {
+namespace {
+using IpAddrPtr = std::vector<std::string> IpAddresses::*;
+
+// Ensure no ipv4 ips appear when ipVersion is set to ipv6 and vice-versa.
+bool isIplistVersionMismatch(IpAddrPtr addrPtr, FilterConditions::IpVersion ipVersion,
+    const FilterConditions &filterConditions)
+{
+    const auto &versionedSourceAddresses = filterConditions.sourceIps.*addrPtr;
+    const auto &versionedDestAddresses = filterConditions.destIps.*addrPtr;
+
+    return filterConditions.ipVersion == ipVersion && (!versionedSourceAddresses.empty() ||
+        !versionedDestAddresses.empty());
+}
+}
+
 auto Parser::match(TokenType type) -> std::optional<Token>
 {
     if(_shouldTrace)
@@ -35,14 +50,21 @@ auto Parser::numberList() -> std::vector<uint16_t>
     return results;
 }
 
-auto Parser::ipList() -> std::vector<std::string>
+auto Parser::ipList() -> IpAddresses
 {
-    auto results = list([](Token tok)
+    std::vector<std::string> ipv4Addresses;
+    std::vector<std::string> ipv6Addresses;
+
+    listForEach([&](Token tok)
     {
-        return tok.text;
+        if(tok.type == TokenType::Ipv4Address)
+            ipv4Addresses.push_back(tok.text);
+        else if(tok.type == TokenType::Ipv6Address)
+            ipv6Addresses.push_back(tok.text);
+
     }, TokenType::Ipv4Address, TokenType::Ipv6Address);
 
-    return results;
+    return {ipv4Addresses, ipv6Addresses};
 }
 
 // Does not return a list - only returns one protocol type.
@@ -64,7 +86,8 @@ auto Parser::transportProtocolList()
 
     // Allow at most 2 values in list
     if(results.size() > 2)
-        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} @ {}", results.size(), prevSourceLocation.toString()));
+        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} @ {}",
+            results.size(), prevSourceLocation.toString()));
 
     if(std::ranges::all_of(results, [](auto val) { return val == TransportProtocol::Tcp; }))
         return TransportProtocol::Tcp;
@@ -96,13 +119,18 @@ auto Parser::transportProtocol()
 }
 
 auto Parser::addressAndPorts()
-    -> std::pair<std::vector<std::string>, std::vector<uint16_t>>
+    -> std::pair<IpAddresses, std::vector<uint16_t>>
 {
-    std::vector<std::string> addresses;
+    IpAddresses addresses;
     std::vector<uint16_t> ports;
 
     if(auto tok = match(TokenType::Ipv4Address, TokenType::Ipv6Address))
-        addresses.push_back(tok->text);
+    {
+        if(tok->type == TokenType::Ipv4Address)
+            addresses.v4.push_back(tok->text);
+        else
+            addresses.v6.push_back(tok->text);
+    }
     else if(peek(TokenType::LBrack))
         addresses = ipList();
 
@@ -119,7 +147,7 @@ auto Parser::addressAndPorts()
     if(addresses.empty() && ports.empty())
         throw ParseError{std::format("Either an ip address or a port is needed, @ {}", sourceLocation().toString())};
 
-    return {addresses, std::move(ports)};
+    return {std::move(addresses), std::move(ports)};
 }
 
 void Parser::sourceCondition(FilterConditions *pConditions)
@@ -172,18 +200,33 @@ FilterConditions Parser::conditions()
     if(match(TokenType::To))
         destCondition(&filterConditions);
 
+    if(isIplistVersionMismatch(&IpAddresses::v4, IpVersion::Inet6, filterConditions))
+    {
+        throw ParseError{std::format("Ip version is set to Inet6 yet ipv4 ips are present! @ line",
+            peek().sourceLocation.line)};
+    }
+
+    if(isIplistVersionMismatch(&IpAddresses::v6, IpVersion::Inet4, filterConditions))
+    {
+        throw ParseError{std::format("Ip version is set to Inet4 yet ipv6 ips are present! @ line",
+            peek().sourceLocation.line)};
+    }
+
     return filterConditions;
 }
 
 std::unique_ptr<Node> Parser::filter()
 {
-    FilterNode::Action action{};
-    FilterNode::Layer layer{};
+    using Direction = FilterNode::Direction;
+    using Action = FilterNode::Action;
+
+    Action action{};
+    Direction direction{};
 
     if(match(TokenType::PermitAction))
-        action = FilterNode::Permit;
+        action = Action::Permit;
     else if(match(TokenType::BlockAction))
-        action = FilterNode::Block;
+        action = Action::Block;
     else
         unexpectedTokenError();
 
@@ -192,15 +235,15 @@ std::unique_ptr<Node> Parser::filter()
         // and we know wther it's ipv4 or ipv6 or both (i.e inet vs inet6)
         // instead what this does is constrains the layers that are available to the conditions
         // so if it's 'out' then we only get AUTH_CONNECT_V* NOT the AUTH_RECV_V*
-        layer = FilterNode::AUTH_CONNECT_V4;
+        direction = Direction::Out;
     else if(match(TokenType::InDir))
-        layer = FilterNode::AUTH_RECV_V4;
+        direction = Direction::In;
     else
         unexpectedTokenError();
 
     FilterConditions filterConditions = conditions();
 
-    return std::make_unique<FilterNode>(action, layer, std::move(filterConditions));
+    return std::make_unique<FilterNode>(action, direction, std::move(filterConditions));
 }
 
 std::unique_ptr<RulesetNode> Parser::parse()

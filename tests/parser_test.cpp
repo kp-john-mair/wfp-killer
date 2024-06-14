@@ -26,7 +26,7 @@ TEST(ParserTests, TestBasicParsingSingleRule)
     ASSERT_EQ(tree->children().size(), 1);
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
-    ASSERT_EQ(rule->layer(), FilterNode::Layer::AUTH_CONNECT_V4);
+    ASSERT_EQ(rule->direction(), FilterNode::Direction::Out);
     ASSERT_EQ(rule->filterConditions(), NoFilterConditions);
 
     std::cout << *tree;
@@ -47,15 +47,15 @@ TEST(ParserTests, TestBasicParsingMultipleRules)
     ASSERT_EQ(tree->children().size(), 3);
 
     ASSERT_EQ(rule1->action(), FilterNode::Action::Permit);
-    ASSERT_EQ(rule1->layer(), FilterNode::Layer::AUTH_CONNECT_V4);
+    ASSERT_EQ(rule1->direction(), FilterNode::Direction::Out);
     ASSERT_EQ(rule1->filterConditions(), NoFilterConditions);
 
     ASSERT_EQ(rule2->action(), FilterNode::Action::Block);
-    ASSERT_EQ(rule2->layer(), FilterNode::Layer::AUTH_RECV_V4);
+    ASSERT_EQ(rule2->direction(), FilterNode::Direction::In);
     ASSERT_EQ(rule2->filterConditions(), NoFilterConditions);
 
     ASSERT_EQ(rule3->action(), FilterNode::Action::Permit);
-    ASSERT_EQ(rule3->layer(), FilterNode::Layer::AUTH_RECV_V4);
+    ASSERT_EQ(rule3->direction(), FilterNode::Direction::In);
     ASSERT_EQ(rule3->filterConditions(), NoFilterConditions);
 
     std::cout << *tree;
@@ -72,11 +72,11 @@ TEST(ParserTests, TestDestIpList)
     const auto conditions = rule->filterConditions();
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
-    ASSERT_EQ(rule->layer(), FilterNode::Layer::AUTH_CONNECT_V4);
-    ASSERT_EQ(conditions.destIps, (std::vector<std::string>{"192.168.0.0/16", "10.0.0.0/8"}));
+    ASSERT_EQ(rule->direction(), FilterNode::Direction::Out);
+    ASSERT_EQ(conditions.destIps.v4, (std::vector<std::string>{"192.168.0.0/16", "10.0.0.0/8"}));
 }
 
-TEST(ParserTests, TestSourceIpList)
+TEST(ParserTests, TestSourceIpListv4)
 {
     std::string input = R"(permit out from {192.168.0.0/16, 10.0.0.0/8})";
 
@@ -87,8 +87,39 @@ TEST(ParserTests, TestSourceIpList)
     const auto conditions = rule->filterConditions();
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
-    ASSERT_EQ(rule->layer(), FilterNode::Layer::AUTH_CONNECT_V4);
-    ASSERT_EQ(conditions.sourceIps, (std::vector<std::string>{"192.168.0.0/16", "10.0.0.0/8"}));
+    ASSERT_EQ(rule->direction(), FilterNode::Direction::Out);
+    ASSERT_EQ(conditions.sourceIps.v4, (std::vector<std::string>{"192.168.0.0/16", "10.0.0.0/8"}));
+}
+
+TEST(ParserTests, TestSourceIpListv6)
+{
+    std::string input = R"(permit out from {123::1/64, 234::2/128})";
+
+    auto tree = Parser{input}.parse();
+    ASSERT_EQ(tree->children().size(), 1);
+
+    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto conditions = rule->filterConditions();
+
+    ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
+    ASSERT_EQ(rule->direction(), FilterNode::Direction::Out);
+    ASSERT_EQ(conditions.sourceIps.v6, (std::vector<std::string>{"123::1/64", "234::2/128"}));
+}
+
+TEST(ParserTests, TestSourceIpListMixed)
+{
+    std::string input = R"(permit out from {123::1/64, 192.168.0.0/16, 234::2/128, 10.0.0.0/8})";
+
+    auto tree = Parser{input}.parse();
+    ASSERT_EQ(tree->children().size(), 1);
+
+    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto conditions = rule->filterConditions();
+
+    ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
+    ASSERT_EQ(rule->direction(), FilterNode::Direction::Out);
+    ASSERT_EQ(conditions.sourceIps.v6, (std::vector<std::string>{"123::1/64", "234::2/128"}));
+    ASSERT_EQ(conditions.sourceIps.v4, (std::vector<std::string>{"192.168.0.0/16", "10.0.0.0/8"}));
 }
 
 TEST(ParserTests, TestTransportProtocol)

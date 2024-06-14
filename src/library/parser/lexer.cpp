@@ -216,7 +216,7 @@ Token Lexer::nextToken() {
             return {TokenType::Number, ident, calcSourceLocation(ident)};
 
         // Anything else - not supported.
-        throw ParseError{std::format("Unrecognized identifier: '{}'! @ {}", ident,
+        throw ParseError{std::format("Unrecognized identifier: '{}'! {}", ident,
             calcSourceLocation(ident).toString())};
     }
     }

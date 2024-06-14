@@ -28,9 +28,9 @@ public:
     }
 
 private:
-    void unexpectedTokenError()
+    void unexpectedTokenError(const std::string &message="")
     {
-        throw ParseError{std::format("Unexpected token {}", _lookahead.toString())};
+        throw ParseError{std::format("Unexpected token '{}': {}", _lookahead.toString(), message)};
     }
 
     // Token processing

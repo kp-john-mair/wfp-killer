@@ -149,6 +149,22 @@ TEST(ParserTests, TestErrorsForTransportProtocol)
     ASSERT_EQ(tree == nullptr, true);
 }
 
+TEST(ParserTests, TestErrorsIp6VersionMismatch)
+{
+    // An ipv6 ip is not allowed for inet (which is ipv4)
+    auto tree = Parser{"permit out inet to 123::1"}.parseTrace();
+    // the unique_ptr will be null - since parse failed, instead we trace an error
+    ASSERT_EQ(tree == nullptr, true);
+}
+
+TEST(ParserTests, TestErrorsIp4VersionMismatch)
+{
+    // An ipv4 ip is not allowed for ine6 (which is ipv6)
+    auto tree = Parser{"permit out inet6 to 1.1.1.1"}.parseTrace();
+    // the unique_ptr will be null - since parse failed, instead we trace an error
+    ASSERT_EQ(tree == nullptr, true);
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

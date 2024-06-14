@@ -2,8 +2,8 @@
 
 namespace wfpk {
 namespace {
-using IpAddrPtr = std::vector<std::string> IpAddresses::*;
 
+using IpAddrPtr = std::vector<std::string> IpAddresses::*;
 // Ensure no ipv4 ips appear when ipVersion is set to ipv6 and vice-versa.
 bool isIplistVersionMismatch(IpAddrPtr addrPtr, FilterConditions::IpVersion ipVersion,
     const FilterConditions &filterConditions)
@@ -86,7 +86,7 @@ auto Parser::transportProtocolList()
 
     // Allow at most 2 values in list
     if(results.size() > 2)
-        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} @ {}",
+        throw ParseError(std::format("Expected at most 2 values in transport protocol list, but got: {} at {}",
             results.size(), prevSourceLocation.toString()));
 
     if(std::ranges::all_of(results, [](auto val) { return val == TransportProtocol::Tcp; }))
@@ -113,7 +113,7 @@ auto Parser::transportProtocol()
     else if(peek(TokenType::LBrack))
         return transportProtocolList();
     else
-        unexpectedTokenError();
+        unexpectedTokenError("expected tcp or udp or a list of protocols.");
 
     return TransportProtocol::AllTransports;;
 }
@@ -141,11 +141,11 @@ auto Parser::addressAndPorts()
         else if(peek(TokenType::LBrack))
             ports = numberList();
         else
-           unexpectedTokenError();
+           unexpectedTokenError("expected a port number or a list of port numbers.");
     }
 
     if(addresses.empty() && ports.empty())
-        throw ParseError{std::format("Either an ip address or a port is needed, @ {}", sourceLocation().toString())};
+        throw ParseError{std::format("Either an ip address or a port is needed, at {}", sourceLocation().toString())};
 
     return {std::move(addresses), std::move(ports)};
 }
@@ -202,13 +202,13 @@ FilterConditions Parser::conditions()
 
     if(isIplistVersionMismatch(&IpAddresses::v4, IpVersion::Inet6, filterConditions))
     {
-        throw ParseError{std::format("Ip version is set to Inet6 yet ipv4 ips are present! @ line",
+        throw ParseError{std::format("Ip version is set to Inet6 yet ipv4 ips are present! at line {}",
             peek().sourceLocation.line)};
     }
 
     if(isIplistVersionMismatch(&IpAddresses::v6, IpVersion::Inet4, filterConditions))
     {
-        throw ParseError{std::format("Ip version is set to Inet4 yet ipv6 ips are present! @ line",
+        throw ParseError{std::format("Ip version is set to Inet4 yet ipv6 ips are present! at line {}",
             peek().sourceLocation.line)};
     }
 
@@ -228,7 +228,7 @@ std::unique_ptr<Node> Parser::filter()
     else if(match(TokenType::BlockAction))
         action = Action::Block;
     else
-        unexpectedTokenError();
+        unexpectedTokenError("expected a valid action - such as block or permit.");
 
     if(match(TokenType::OutDir))
         // cannot actually decide the layer until the "conditions" have been parsed
@@ -239,7 +239,7 @@ std::unique_ptr<Node> Parser::filter()
     else if(match(TokenType::InDir))
         direction = Direction::In;
     else
-        unexpectedTokenError();
+        unexpectedTokenError("expected a direction - such as out or in.");
 
     FilterConditions filterConditions = conditions();
 
@@ -260,7 +260,7 @@ std::unique_ptr<RulesetNode> Parser::parse()
             if(peek(TokenType::PermitAction, TokenType::BlockAction))
                 ruleset->addChild(filter());
             else
-                unexpectedTokenError();
+                unexpectedTokenError("got an invalid filter expression.");
         }
 
         return ruleset;

@@ -64,7 +64,7 @@ auto Parser::ipList() -> IpAddresses
 
     }, TokenType::Ipv4Address, TokenType::Ipv6Address);
 
-    return {ipv4Addresses, ipv6Addresses};
+    return {std::move(ipv4Addresses), std::move(ipv6Addresses)};
 }
 
 // Does not return a list - only returns one protocol type.
@@ -127,9 +127,9 @@ auto Parser::addressAndPorts()
     if(auto tok = match(TokenType::Ipv4Address, TokenType::Ipv6Address))
     {
         if(tok->type == TokenType::Ipv4Address)
-            addresses.v4.push_back(tok->text);
+            addresses.v4.push_back(std::move(tok->text));
         else
-            addresses.v6.push_back(tok->text);
+            addresses.v6.push_back(std::move(tok->text));
     }
     else if(peek(TokenType::LBrack))
         addresses = ipList();
@@ -230,11 +230,9 @@ std::unique_ptr<Node> Parser::filter()
     else
         unexpectedTokenError("expected a valid action - such as block or permit.");
 
+    // At this point just decide if we're filtering in or out traffic
+    // the exact layer will be determined later.
     if(match(TokenType::OutDir))
-        // cannot actually decide the layer until the "conditions" have been parsed
-        // and we know wther it's ipv4 or ipv6 or both (i.e inet vs inet6)
-        // instead what this does is constrains the layers that are available to the conditions
-        // so if it's 'out' then we only get AUTH_CONNECT_V* NOT the AUTH_RECV_V*
         direction = Direction::Out;
     else if(match(TokenType::InDir))
         direction = Direction::In;

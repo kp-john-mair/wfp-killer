@@ -1,9 +1,11 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <fwpmu.h>
+#include <sstream>
 #include <utils.h>
 
 namespace wfpk {
+
 auto splitString(const std::string &str, char delim) -> std::vector<std::string>
 {
     auto parts = str | std::ranges::views::split(delim);
@@ -22,6 +24,20 @@ std::string ipToString(UINT32 ipAddress)
     InetNtopA(AF_INET, &ipAddress, str, INET_ADDRSTRLEN);
 
     return std::string{str};
+}
+
+uint32_t stringToIp4(const std::string &addressStr)
+{
+    uint32_t address{};
+    InetPtonA(AF_INET, addressStr.c_str(), &address);
+    return ntohl(address);
+}
+
+struct in6_addr stringToIp6(const std::string& addressStr)
+{
+    struct in6_addr address{};
+    InetPtonA(AF_INET6, addressStr.c_str(), &address);
+    return address;
 }
 
 // Ipv6

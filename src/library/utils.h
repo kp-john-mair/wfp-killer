@@ -17,6 +17,7 @@
 #include <concepts>
 #include <assert.h>
 #include <filesystem>
+#include <magic_enum.h>
 
 // Allow GUID to be used as a key in a hash
 template <>
@@ -42,6 +43,25 @@ private:
     inline static Singleton* _instance = nullptr;
 };
 
+template <class Derived>
+struct OStreamTraceable
+{
+public:
+    friend std::ostream& operator<<(std::ostream &ostream, const Derived &value)
+    {
+        ostream << static_cast<const Derived&>(value).toString();
+        return ostream;
+    }
+};
+
+// Given an enum value, return its name as a string
+template <typename T>
+    requires std::is_enum_v<T>
+std::string enumName(T enumValue)
+{
+    return std::string{magic_enum::enum_name(enumValue)};
+}
+
 // Split a std::string based on a delim
 auto splitString(const std::string &str, char delim) -> std::vector<std::string>;
 
@@ -50,6 +70,10 @@ auto splitString(const std::string &str, char delim) -> std::vector<std::string>
 std::string ipToString(UINT32 ipAddress);
 // Ipv6 - Ensure we get an array of UINT8[16] - prevent decay to pointer
 std::string ipToString(const UINT8 (&ipAddress)[16]);
+// Convert a string to an ipv4 address (host order)
+uint32_t stringToIp4(const std::string &addressStr);
+// Convert a string to an ipv6 address
+struct in6_addr stringToIp6(const std::string& addressStr);
 // blobs here represent appIds
 std::string blobToString(const FWP_BYTE_BLOB &blob);
 // Convert a std::wstring to a std::string
@@ -65,6 +89,34 @@ std::string getErrorString(DWORD errorCode);
 bool isIpv4(const std::string &ipAddress);
 // Validate a string contains an ipv6 address
 bool isIpv6(const std::string &ipAddress);
+
+// Join together a vector of elements of type T as a string
+template <typename T>
+std::string joinVec(const std::vector<T>& ports) {
+    std::ostringstream oss;
+
+    for(size_t i = 0; i < ports.size(); ++i)
+    {
+        if(i != 0)
+            oss << ", ";
+
+        oss << ports[i];
+    }
+
+    return oss.str();
+}
+
+template <typename T>
+auto concatVec(const std::vector<T> &vec1, const std::vector<T> &vec2)
+    -> std::vector<T>
+{
+    std::vector<T> newVec;
+    newVec.reserve(vec1.size() + vec2.size());
+    newVec.insert(newVec.end(), vec1.begin(), vec1.end());
+    newVec.insert(newVec.end(), vec2.begin(), vec2.end());
+
+    return newVec;
+}
 
 // void fwpConditionValueHandler(const FWP_CONDITION_VALUE &value, auto handlerFunc)
 // {

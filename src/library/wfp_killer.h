@@ -32,6 +32,7 @@ public:
     void listFilters(const Options &options) const;
     void deleteFilters(const std::vector<FilterId> &filterIds) const;
     void monitor();
+    void loadFilters(const std::string &sourceFile);
 
 private:
     bool deleteSingleFilter(FilterId filterId) const;

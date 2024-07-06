@@ -2,6 +2,16 @@
 #include <utils.h>
 
 namespace wfpk {
+
+struct BasicFilter : public FWPM_FILTER
+{
+    BasicFilter(uint8_t weight)
+    : FWPM_FILTER{}
+    {
+
+    }
+};
+
 void WfpExecutor::visit(const RulesetNode &ruleset) const
 {
     for(const auto &node : ruleset.children())

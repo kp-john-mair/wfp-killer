@@ -126,6 +126,6 @@ private:
 private:
     std::string _input;
     size_t _currentIndex{0};
-    SourceLocation _sourceLocation{1, 1};
+    SourceLocation _sourceLocation;
 };
 }

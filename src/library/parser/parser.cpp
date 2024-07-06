@@ -244,7 +244,8 @@ std::unique_ptr<Node> Parser::filter()
     return std::make_unique<FilterNode>(action, direction, std::move(filterConditions));
 }
 
-std::unique_ptr<RulesetNode> Parser::parse()
+auto Parser::parse()
+    -> std::unique_ptr<RulesetNode>
 {
     auto ruleset = std::make_unique<RulesetNode>();
 

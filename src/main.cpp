@@ -11,16 +11,17 @@
 
 #include "cli/commands.h"
 
-namespace {
+namespace
+{
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
 {
     switch(ctrlType)
     {
-    case CTRL_C_EVENT:
-        std::cout << "Ctrl+C detected, exiting...\n";
-        exit(0);
-        return TRUE;
+        case CTRL_C_EVENT:
+            std::cout << "Ctrl+C detected, exiting...\n";
+            exit(0);
+            return TRUE;
     }
     return FALSE;
 }
@@ -33,14 +34,15 @@ void showHelp(const std::string &programName, const CommandMapT &commandMap)
     std::cout << std::format("Usage: {} <subcommand>\n\n", programName);
     std::cout << "Subcommands:\n";
     for(const auto &[name, cmd] : commandMap)
+    {
         std::cout << std::format("  {:10} {}\n", name, cmd->description());
+    }
 
     std::cout << std::format("\nSee {} <subcommand> -h for detailed help.\n", programName);
 }
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     if(IsUserAnAdmin() == FALSE)
     {
@@ -51,7 +53,7 @@ int main(int argc, char** argv)
     if(!SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE))
     {
         // If the handler cannot be installed, exit
-        std::cerr <<  "Error: Unable to install Ctrl+C handler\n";
+        std::cerr << "Error: Unable to install Ctrl+C handler\n";
         return 1;
     }
 
@@ -60,7 +62,7 @@ int main(int argc, char** argv)
     // Use a map so we can enforce order for display purposes
     // Only using a std::shared_ptr so can use the initializer list form of initialization
     // which requires the elements to be copyable (and so won't work with a std::unique_ptr)
-    CommandMapT CliCommands {
+    CommandMapT CliCommands{
         {"list", std::make_shared<wfpk::ListCommand>(&wfpKiller)},
         {"delete", std::make_shared<wfpk::DeleteCommand>(&wfpKiller)},
         {"create", std::make_shared<wfpk::CreateCommand>(&wfpKiller)},
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
             return 1;
         }
     }
-    catch(const wfpk::WfpError& ex)
+    catch(const wfpk::WfpError &ex)
     {
         std::cerr << "Fatal WFP error: " << ex.what() << "\n";
         return 1;

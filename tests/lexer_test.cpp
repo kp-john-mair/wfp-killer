@@ -13,25 +13,24 @@ TEST(LexerTests, TestBasicLexing)
 
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
-    std::vector expected = {
-        PermitAction, OutDir, Inet4, Proto, LBrack,
-        TcpTransport, Comma, UdpTransport, RBrack, From, String
-    };
+    std::vector expected = {PermitAction, OutDir,       Inet4,  Proto, LBrack, TcpTransport,
+                            Comma,        UdpTransport, RBrack, From,  String};
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
 
 TEST(LexerTests, TestAllTokens)
 {
-    std::string input = R"(permit block out ::1 in inet inet6 proto {tcp, udp} from "baby" port 53 1.1.1.1 all)";
+    std::string input =
+        R"(permit block out ::1 in inet inet6 proto {tcp, udp} from "baby" port 53 1.1.1.1 all)";
     Lexer lexer{input};
 
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
-    std::vector expected = {
-        PermitAction, BlockAction, OutDir, Ipv6Address, InDir, Inet4, Inet6, Proto, LBrack,
-        TcpTransport, Comma, UdpTransport, RBrack, From, String, Port, Number, Ipv4Address, All
-    };
+    std::vector expected = {PermitAction, BlockAction,  OutDir,      Ipv6Address, InDir,
+                            Inet4,        Inet6,        Proto,       LBrack,      TcpTransport,
+                            Comma,        UdpTransport, RBrack,      From,        String,
+                            Port,         Number,       Ipv4Address, All};
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
@@ -44,10 +43,8 @@ TEST(LexerTests, TestIgnoresWhiteSpace)
 
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
-    std::vector expected = {
-        BlockAction, OutDir, Proto, LBrack,
-        TcpTransport, Comma, UdpTransport, RBrack
-    };
+    std::vector expected = {BlockAction,  OutDir, Proto,        LBrack,
+                            TcpTransport, Comma,  UdpTransport, RBrack};
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
@@ -58,7 +55,7 @@ TEST(LexerTests, TestNumbers)
 
     Lexer lexer{input};
     Token actual = lexer.nextToken();
-    Token expected = { Number, "53" };
+    Token expected = {Number, "53"};
 
     ASSERT_EQ(actual, expected);
 }
@@ -70,7 +67,7 @@ TEST(LexerTests, TestString)
     Lexer lexer{input};
     Token actual = lexer.nextToken();
     // Strips out the outer ""
-    Token expected = { String, "the air can tear dead snails from the elephants lung" };
+    Token expected = {String, "the air can tear dead snails from the elephants lung"};
 
     ASSERT_EQ(actual, expected);
 }
@@ -81,7 +78,7 @@ TEST(LexerTests, TestIp4Address)
 
     Lexer lexer{input};
     Token actual = lexer.nextToken();
-    Token expected = { Ipv4Address, "1.1.1.1" };
+    Token expected = {Ipv4Address, "1.1.1.1"};
 
     ASSERT_EQ(actual, expected);
 }
@@ -95,9 +92,9 @@ TEST(LexerTests, TestIp4AddressWithSubnet)
     std::string zeroPrefix = "1.1.1.1/0";
 
     // Valid subnets
-    ASSERT_EQ((Lexer{inRangePrefix}.nextToken()), (Token{ Ipv4Address, inRangePrefix }));
-    ASSERT_EQ((Lexer{maxPrefix}.nextToken()), (Token{ Ipv4Address, maxPrefix }));
-    ASSERT_EQ((Lexer{minPrefix}.nextToken()), (Token{ Ipv4Address, minPrefix }));
+    ASSERT_EQ((Lexer{inRangePrefix}.nextToken()), (Token{Ipv4Address, inRangePrefix}));
+    ASSERT_EQ((Lexer{maxPrefix}.nextToken()), (Token{Ipv4Address, maxPrefix}));
+    ASSERT_EQ((Lexer{minPrefix}.nextToken()), (Token{Ipv4Address, minPrefix}));
 
     // Invalid subnets
     ASSERT_THROW((Lexer{prefixExceeded}.nextToken()), wfpk::ParseError);
@@ -112,37 +109,32 @@ TEST(LexerTests, TestIp4AddressesNoSpaceContext)
 
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
-    std::vector expected = {
-        From, LBrack, Ipv4Address, Comma, Ipv4Address, RBrack
-    };
+    std::vector expected = {From, LBrack, Ipv4Address, Comma, Ipv4Address, RBrack};
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
 
 TEST(LexerTests, TestIp6Address)
 {
-    std::vector<std::string> addresses =
-    {
-        // Full
-        "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-        // Compressed
-        "2407::9a62:2100:483:91ec:9221:cad",
-        // Link-local
-        "fe80::1096:e770:9d55:7fef",
-        // Unique-local
-        "fd12:3456:789a:1::1",
-        // With leading zeroes
-        "2001:0db8::0001",
-        // Embedded ipv4
-        "::ffff:192.168.1.1",
-        // Loopback
-        "::1"
-    };
+    std::vector<std::string> addresses = {// Full
+                                          "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+                                          // Compressed
+                                          "2407::9a62:2100:483:91ec:9221:cad",
+                                          // Link-local
+                                          "fe80::1096:e770:9d55:7fef",
+                                          // Unique-local
+                                          "fd12:3456:789a:1::1",
+                                          // With leading zeroes
+                                          "2001:0db8::0001",
+                                          // Embedded ipv4
+                                          "::ffff:192.168.1.1",
+                                          // Loopback
+                                          "::1"};
 
     for(const auto &address : addresses)
     {
         Token actual = Lexer{address}.nextToken();
-        Token expected = { Ipv6Address, address };
+        Token expected = {Ipv6Address, address};
         ASSERT_EQ(actual, expected);
     }
 }
@@ -156,9 +148,9 @@ TEST(LexerTests, TestIp6AddressWithSubnet)
     std::string zeroPrefix = "2001::123/0";
 
     // Valid subnets
-    ASSERT_EQ((Lexer{inRangePrefix}.nextToken()), (Token{ Ipv6Address, inRangePrefix }));
-    ASSERT_EQ((Lexer{maxPrefix}.nextToken()), (Token{ Ipv6Address, maxPrefix }));
-    ASSERT_EQ((Lexer{minPrefix}.nextToken()), (Token{ Ipv6Address, minPrefix }));
+    ASSERT_EQ((Lexer{inRangePrefix}.nextToken()), (Token{Ipv6Address, inRangePrefix}));
+    ASSERT_EQ((Lexer{maxPrefix}.nextToken()), (Token{Ipv6Address, maxPrefix}));
+    ASSERT_EQ((Lexer{minPrefix}.nextToken()), (Token{Ipv6Address, minPrefix}));
 
     // Invalid subnets
     ASSERT_THROW((Lexer{prefixExceeded}.nextToken()), wfpk::ParseError);
@@ -173,14 +165,12 @@ TEST(LexerTests, TestIp6AddressesNoSpaceContext)
 
     auto actual = lexer.allTokens() | views::transform(&Token::type);
 
-    std::vector expected = {
-        From, LBrack, Ipv6Address, Comma, Ipv6Address, RBrack
-    };
+    std::vector expected = {From, LBrack, Ipv6Address, Comma, Ipv6Address, RBrack};
 
     ASSERT_TRUE(std::ranges::equal(actual, expected));
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 

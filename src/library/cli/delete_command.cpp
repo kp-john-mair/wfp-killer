@@ -1,12 +1,14 @@
 #include <cli/delete_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 DeleteCommand::DeleteCommand(wfpk::WfpKiller *pWfpKiller)
-: CliCommand(pWfpKiller)
+    : CliCommand(pWfpKiller)
 {
     initOptions("delete", "Delete WFP objects");
     addOption("h,help", "Display this help message.");
-    addOption("f,filter", "Delete a filter.", cxxopts::value<std::vector<std::string>>()->default_value({}));
+    addOption("f,filter", "Delete a filter.",
+              cxxopts::value<std::vector<std::string>>()->default_value({}));
 }
 
 void DeleteCommand::runCommand(int argc, char **argv)
@@ -37,7 +39,9 @@ void DeleteCommand::runCommand(int argc, char **argv)
         {
             filterIds.reserve(filterIdStrs.size());
             for(const auto &filterIdStr : filterIdStrs)
+            {
                 filterIds.push_back(std::stoull(filterIdStr));
+            }
         }
         _pWfpKiller->deleteFilters(filterIds);
     }

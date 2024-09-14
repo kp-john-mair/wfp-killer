@@ -2,7 +2,8 @@
 
 #include <cli/cli_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 class CreateCommand final : public CliCommand
 {
 public:

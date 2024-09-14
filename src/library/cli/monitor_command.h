@@ -2,7 +2,8 @@
 
 #include <cli/cli_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 class MonitorCommand final : public CliCommand
 {
 public:

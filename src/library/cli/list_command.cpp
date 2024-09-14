@@ -1,24 +1,27 @@
 #include <cli/list_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 namespace
 {
-    // This converts a vector of strings to a vector of regex
-    // Since our matchers are case insensitive, we also lowercase them here too.
-    std::vector<std::regex> stringVecToMatchers(const std::vector<std::string> &vec)
+// This converts a vector of strings to a vector of regex
+// Since our matchers are case insensitive, we also lowercase them here too.
+std::vector<std::regex> stringVecToMatchers(const std::vector<std::string> &vec)
+{
+    std::vector<std::regex> matchers;
+    matchers.reserve(vec.size());
+
+    for(const auto &pattern : vec)
     {
-        std::vector<std::regex> matchers;
-        matchers.reserve(vec.size());
-
-        for(const auto &pattern : vec)
-            matchers.emplace_back(wfpk::toLowercase(pattern));
-
-        return matchers;
+        matchers.emplace_back(wfpk::toLowercase(pattern));
     }
+
+    return matchers;
+}
 }
 
 ListCommand::ListCommand(wfpk::WfpKiller *pWfpKiller)
-: CliCommand(pWfpKiller)
+    : CliCommand(pWfpKiller)
 {
     initOptions("list", "List WFP objects");
     addOption("h,help", "Display this help message.");
@@ -26,7 +29,8 @@ ListCommand::ListCommand(wfpk::WfpKiller *pWfpKiller)
     addOption("c,callouts", "Display all callouts.");
     addOption("L,layers", "Display layers.");
     addOption("pia", "Display PIA filters.");
-    addOption("s,search", "Display filters that match the regex.", cxxopts::value<std::vector<std::string>>()->default_value({}));
+    addOption("s,search", "Display filters that match the regex.",
+              cxxopts::value<std::vector<std::string>>()->default_value({}));
     addOption("sublayers", "Display sublayers");
 }
 
@@ -55,11 +59,9 @@ void ListCommand::runCommand(int argc, char **argv)
             layers = stringVecToMatchers({result["search"].as<std::vector<std::string>>()});
         }
 
-        _pWfpKiller->listFilters({
-            .providerMatchers = providers,
-            .layerMatchers = layers,
-            .subLayerMatchers = subLayers
-        });
+        _pWfpKiller->listFilters({.providerMatchers = providers,
+                                  .layerMatchers = layers,
+                                  .subLayerMatchers = subLayers});
     }
     else
     {

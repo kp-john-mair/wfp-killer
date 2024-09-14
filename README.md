@@ -27,3 +27,10 @@ Subcommands:
 
 See wfpk.exe <subcommand> -h for detailed help.
 ```
+
+### clang-format and pre-commit hook
+* pip3 install pre-commit
+* pre-commit install (executed from root folder of project)
+
+This makes use of `.clang-format` and `.pre-commit-config.yaml` files in the project root
+

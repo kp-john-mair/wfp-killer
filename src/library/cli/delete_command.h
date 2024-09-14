@@ -2,7 +2,8 @@
 
 #include <cli/cli_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 class DeleteCommand final : public CliCommand
 {
 public:

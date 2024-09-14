@@ -20,36 +20,45 @@
 #include <magic_enum.h>
 
 // Allow GUID to be used as a key in a hash
-template <>
-struct std::hash<GUID>
+template <> struct std::hash<GUID>
 {
-    size_t operator()(const GUID& guid) const
+    size_t operator()(const GUID &guid) const
     {
-        const uint64_t *p = reinterpret_cast<const uint64_t*>(&guid);
+        const uint64_t *p = reinterpret_cast<const uint64_t *>(&guid);
         return std::hash<uint64_t>{}(p[0]) ^ std::hash<uint64_t>{}(p[1]);
     }
 };
 
-namespace wfpk {
+namespace wfpk
+{
 // CRTP singleton mixin
-template<class Derived>
-class Singleton
+template <class Derived> class Singleton
 {
 public:
-    Singleton() { assert(_instance == nullptr); _instance = this; }
-    ~Singleton() { _instance = nullptr; }
-    static Derived* instance() { return static_cast<Derived*>(_instance); }
+    Singleton()
+    {
+        assert(_instance == nullptr);
+        _instance = this;
+    }
+    ~Singleton()
+    {
+        _instance = nullptr;
+    }
+    static Derived *instance()
+    {
+        return static_cast<Derived *>(_instance);
+    }
+
 private:
-    inline static Singleton* _instance = nullptr;
+    inline static Singleton *_instance = nullptr;
 };
 
-template <class Derived>
-struct OStreamTraceable
+template <class Derived> struct OStreamTraceable
 {
 public:
-    friend std::ostream& operator<<(std::ostream &ostream, const Derived &value)
+    friend std::ostream &operator<<(std::ostream &ostream, const Derived &value)
     {
-        ostream << static_cast<const Derived&>(value).toString();
+        ostream << static_cast<const Derived &>(value).toString();
         return ostream;
     }
 };
@@ -73,15 +82,15 @@ std::string ipToString(const UINT8 (&ipAddress)[16]);
 // Convert a string to an ipv4 address (host order)
 uint32_t stringToIp4(const std::string &addressStr);
 // Convert a string to an ipv6 address
-struct in6_addr stringToIp6(const std::string& addressStr);
+struct in6_addr stringToIp6(const std::string &addressStr);
 // blobs here represent appIds
 std::string blobToString(const FWP_BYTE_BLOB &blob);
 // Convert a std::wstring to a std::string
 std::string wideStringToString(const std::wstring &wstr);
 // Convert a GUID to a std::string
-std::string guidToString(const GUID& guid);
+std::string guidToString(const GUID &guid);
 // Lowercase a string
-std::string toLowercase(const std::string& input);
+std::string toLowercase(const std::string &input);
 
 std::string getErrorString(DWORD errorCode);
 
@@ -91,14 +100,16 @@ bool isIpv4(const std::string &ipAddress);
 bool isIpv6(const std::string &ipAddress);
 
 // Join together a vector of elements of type T as a string
-template <typename T>
-std::string joinVec(const std::vector<T>& ports) {
+template <typename T> std::string joinVec(const std::vector<T> &ports)
+{
     std::ostringstream oss;
 
     for(size_t i = 0; i < ports.size(); ++i)
     {
         if(i != 0)
+        {
             oss << ", ";
+        }
 
         oss << ports[i];
     }
@@ -107,8 +118,7 @@ std::string joinVec(const std::vector<T>& ports) {
 }
 
 template <typename T>
-auto concatVec(const std::vector<T> &vec1, const std::vector<T> &vec2)
-    -> std::vector<T>
+auto concatVec(const std::vector<T> &vec1, const std::vector<T> &vec2) -> std::vector<T>
 {
     std::vector<T> newVec;
     newVec.reserve(vec1.size() + vec2.size());
@@ -200,4 +210,3 @@ auto concatVec(const std::vector<T> &vec1, const std::vector<T> &vec2)
 //     }
 // }
 }
-

@@ -16,27 +16,21 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace wfpk {
+namespace wfpk
+{
 
 namespace
 {
-    // The layers we care about in wfpk - there's many more layers than this
-    // but these are the ones we're interested in for now.
-    const std::vector kLayers = {
-        FWPM_LAYER_OUTBOUND_TRANSPORT_V4,
-        FWPM_LAYER_OUTBOUND_TRANSPORT_V6,
-        FWPM_LAYER_ALE_AUTH_CONNECT_V4,
-        FWPM_LAYER_ALE_AUTH_CONNECT_V6,
-        FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4,
-        FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6,
-        FWPM_LAYER_ALE_BIND_REDIRECT_V4,
-        FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4,
-        FWPM_LAYER_ALE_CONNECT_REDIRECT_V4,
-        FWPM_LAYER_INBOUND_IPPACKET_V4,
-        FWPM_LAYER_OUTBOUND_IPPACKET_V4
-    };
+// The layers we care about in wfpk - there's many more layers than this
+// but these are the ones we're interested in for now.
+const std::vector kLayers = {FWPM_LAYER_OUTBOUND_TRANSPORT_V4,   FWPM_LAYER_OUTBOUND_TRANSPORT_V6,
+                             FWPM_LAYER_ALE_AUTH_CONNECT_V4,     FWPM_LAYER_ALE_AUTH_CONNECT_V6,
+                             FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4, FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6,
+                             FWPM_LAYER_ALE_BIND_REDIRECT_V4,    FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4,
+                             FWPM_LAYER_ALE_CONNECT_REDIRECT_V4, FWPM_LAYER_INBOUND_IPPACKET_V4,
+                             FWPM_LAYER_OUTBOUND_IPPACKET_V4};
 
-    using Options = WfpKiller::Options;
+using Options = WfpKiller::Options;
 }
 
 void WfpKiller::loadFilters(const std::string &sourceFile)
@@ -44,7 +38,9 @@ void WfpKiller::loadFilters(const std::string &sourceFile)
     std::ifstream file{sourceFile};
 
     if(!file.is_open())
+    {
         throw std::runtime_error{std::format("Could not open file: {}", sourceFile)};
+    }
 
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -60,7 +56,8 @@ void WfpKiller::createFilter()
 {
     FWPM_FILTER filter{};
 
-    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(PIA_PROVIDER_KEY)};
+    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{
+        _engine.getProviderByKey(PIA_PROVIDER_KEY)};
 
     // Basic filter setup
     filter.providerKey = &PIA_PROVIDER_KEY;
@@ -91,7 +88,7 @@ void WfpKiller::createFilter()
 
     std::cout << "Trying to add new dummy filter to engine" << std::endl;
 
-    auto id =  _engine.add(filter);
+    auto id = _engine.add(filter);
     if(id != 0)
     {
         std::cout << "Should have created a filter: " << id << std::endl;
@@ -112,9 +109,11 @@ void WfpKiller::listFilters(const Options &options) const
         for(const auto &pFilter : filters)
         {
             if(!options.isEmpty() && !isFilterNameMatched(options.providerMatchers, pFilter))
+            {
                 continue;
+            }
 
-             // Non-existent sublayers are represented as ZeroGuid
+            // Non-existent sublayers are represented as ZeroGuid
             if(pFilter->subLayerKey != ZeroGuid)
             {
                 auto &set = filtersBySubLayer[pFilter->subLayerKey];
@@ -127,23 +126,28 @@ void WfpKiller::listFilters(const Options &options) const
         }
 
         if(filtersBySubLayer.empty() && filtersWithoutSubLayer.empty())
+        {
             continue;
+        }
 
         std::cout << std::format("\nLayer: {}\n", WfpNameMapper::getName(layerKey).rawName);
 
         for(const auto &[subLayerKey, filterSet] : filtersBySubLayer)
         {
-            std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{_engine.getSubLayerByKey(subLayerKey)};
+            std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer{
+                _engine.getSubLayerByKey(subLayerKey)};
 
             if(pSubLayer)
             {
-                std::string subLayerName = toLowercase(wideStringToString(pSubLayer->displayData.name));
-                std::cout << std::format("SubLayer: {}\n\n", wideStringToString(pSubLayer->displayData.name));
+                std::string subLayerName =
+                    toLowercase(wideStringToString(pSubLayer->displayData.name));
+                std::cout << std::format("SubLayer: {}\n\n",
+                                         wideStringToString(pSubLayer->displayData.name));
             }
             else
             {
                 std::cerr << std::format("Got an invalid subLayer GUID: {}\n",
-                    WfpNameMapper::getName(subLayerKey).rawName);
+                                         WfpNameMapper::getName(subLayerKey).rawName);
             }
 
             for(const auto &pFilter : filterSet)
@@ -153,23 +157,28 @@ void WfpKiller::listFilters(const Options &options) const
             }
 
             if(!filterSet.empty())
+            {
                 std::cout << "\n";
+            }
         }
 
         if(!filtersWithoutSubLayer.empty())
         {
             std::cout << "No SubLayer\n\n";
             for(const auto &pFilter : filtersWithoutSubLayer)
+            {
                 std::cout << *pFilter << "\n";
+            }
         }
     }
 
     std::cout << std::format("\nTotal number of filters: {}\n", filterCount);
 }
 
-// TODO: make this more efficient - it's currently loading (sublayers and providers) objects every time
+// TODO: make this more efficient - it's currently loading (sublayers and providers) objects every
+// time
 bool WfpKiller::isFilterNameMatched(const std::vector<std::regex> &matchers,
-    const std::shared_ptr<FWPM_FILTER> &pFilter) const
+                                    const std::shared_ptr<FWPM_FILTER> &pFilter) const
 {
     std::unique_ptr<FWPM_SUBLAYER, WfpDeleter> pSubLayer;
     std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider;
@@ -187,13 +196,17 @@ bool WfpKiller::isFilterNameMatched(const std::vector<std::regex> &matchers,
     {
         std::string subLayerName = toLowercase(wideStringToString(pSubLayer->displayData.name));
         if(isNameMatched(matchers, subLayerName))
+        {
             return true;
+        }
     }
     if(pProvider)
     {
         std::string providerName = toLowercase(wideStringToString(pProvider->displayData.name));
         if(isNameMatched(matchers, providerName))
+        {
             return true;
+        }
     }
 
     return false;
@@ -205,8 +218,7 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
 
     // Returns true if a given GUID ptr points to a PIA filter.
     // Null provider pointers are ignored.
-    auto isPiaProvider = [&](const GUID *pProviderKey)
-    {
+    auto isPiaProvider = [&](const GUID *pProviderKey) {
         return pProviderKey && IsEqualGUID(*pProviderKey, PIA_PROVIDER_KEY);
     };
 
@@ -217,7 +229,9 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
         for(const auto &filterId : filterIds)
         {
             if(deleteSingleFilter(filterId))
+            {
                 ++deleteCount;
+            }
         }
     }
     // Delete ALL PIA filters
@@ -225,12 +239,16 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
     {
         // Get all PIA filters
         std::vector<std::shared_ptr<FWPM_FILTER>> piaFilters;
-         _engine.enumerateFiltersForLayers(kLayers, [&](const auto &pFilter) {
-                if(isPiaProvider(pFilter->providerKey))
-                    piaFilters.push_back(pFilter);
+        _engine.enumerateFiltersForLayers(kLayers, [&](const auto &pFilter) {
+            if(isPiaProvider(pFilter->providerKey))
+            {
+                piaFilters.push_back(pFilter);
+            }
         });
 
-        std::cout << std::format("This action will delete ALL PIA filters\nAre you sure? (y/n) (will delete {} filters)\n", piaFilters.size());
+        std::cout << std::format("This action will delete ALL PIA filters\nAre you sure? (y/n) "
+                                 "(will delete {} filters)\n",
+                                 piaFilters.size());
         char userDecision{};
         std::cin >> userDecision;
         if(userDecision == 'y')
@@ -239,7 +257,9 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
             for(const auto &pFilter : piaFilters)
             {
                 if(deleteSingleFilter(pFilter->filterId))
+                {
                     ++deleteCount;
+                }
             }
         }
     }
@@ -250,9 +270,8 @@ void WfpKiller::deleteFilters(const std::vector<FilterId> &filterIds) const
 void WfpKiller::monitor()
 {
     std::cout << "Monitoring network events - press enter or Ctrl+C to stop.\n";
-    _engine.monitorEvents([](void *context, const FWPM_NET_EVENT *event) {
-        std::cout << *event << "\n";
-    });
+    _engine.monitorEvents(
+        [](void *context, const FWPM_NET_EVENT *event) { std::cout << *event << "\n"; });
 
     std::cin.get();
 }
@@ -262,7 +281,8 @@ bool WfpKiller::deleteSingleFilter(FilterId filterId) const
     DWORD result = _engine.deleteFilterById(filterId);
     if(result != ERROR_SUCCESS)
     {
-        std::cerr << std::format("Error: Failed to delete filter with id {}: {}\n", filterId, getErrorString(result));
+        std::cerr << std::format("Error: Failed to delete filter with id {}: {}\n", filterId,
+                                 getErrorString(result));
         return false;
     }
     else
@@ -272,7 +292,8 @@ bool WfpKiller::deleteSingleFilter(FilterId filterId) const
     }
 }
 
-bool WfpKiller::isNameMatched(const std::vector<std::regex> &matchers, const std::string &name) const
+bool WfpKiller::isNameMatched(const std::vector<std::regex> &matchers,
+                              const std::string &name) const
 {
     bool matched = std::ranges::any_of(matchers, [&](const auto &providerMatcher) {
         return std::regex_search(name, providerMatcher);

@@ -1,21 +1,22 @@
 #include <visitors/wfp_executor.h>
 #include <utils.h>
 
-namespace wfpk {
+namespace wfpk
+{
 
 struct BasicFilter : public FWPM_FILTER
 {
     BasicFilter(uint8_t weight)
-    : FWPM_FILTER{}
-    {
-
-    }
+        : FWPM_FILTER{}
+    {}
 };
 
 void WfpExecutor::visit(const RulesetNode &ruleset) const
 {
     for(const auto &node : ruleset.children())
+    {
         node->accept(*this);
+    }
 }
 
 void WfpExecutor::visit(const FilterNode &filterNode) const
@@ -26,9 +27,10 @@ void WfpExecutor::visit(const FilterNode &filterNode) const
     std::cout << "Adding rule: " << filterNode << std::endl;
 
     FWPM_FILTER filter{};
-    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{_engine.getProviderByKey(PIA_PROVIDER_KEY)};
+    std::unique_ptr<FWPM_PROVIDER, WfpDeleter> pProvider{
+        _engine.getProviderByKey(PIA_PROVIDER_KEY)};
 
-   // Basic filter setup
+    // Basic filter setup
     filter.providerKey = &PIA_PROVIDER_KEY;
     filter.subLayerKey = PIA_SUBLAYER_KEY;
     filter.flags = FWPM_FILTER_FLAG_PERSISTENT | FWPM_FILTER_FLAG_INDEXED;
@@ -37,14 +39,22 @@ void WfpExecutor::visit(const FilterNode &filterNode) const
     filter.displayData = pProvider->displayData;
 
     if(filterNode.direction() == Direction::Out)
+    {
         filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+    }
     else if(filterNode.direction() == Direction::In)
+    {
         filter.layerKey = FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4;
+    }
 
     if(filterNode.action() == FilterNode::Action::Permit)
+    {
         filter.action.type = FWP_ACTION_PERMIT;
+    }
     else if(filterNode.action() == FilterNode::Action::Block)
+    {
         filter.action.type = FWP_ACTION_BLOCK;
+    }
 
     const auto filterConditions = filterNode.filterConditions();
 

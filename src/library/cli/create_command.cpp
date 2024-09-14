@@ -1,8 +1,9 @@
 #include <cli/create_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 CreateCommand::CreateCommand(wfpk::WfpKiller *pWfpKiller)
-: CliCommand(pWfpKiller)
+    : CliCommand(pWfpKiller)
 {
     initOptions("create", "create a WFP filter");
     addOption("h,help", "Display this help message.");

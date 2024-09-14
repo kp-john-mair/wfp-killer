@@ -2,12 +2,15 @@
 
 #include <utils.h>
 
-namespace wfpk {
+namespace wfpk
+{
 // Custom error that represents a parsing/lexing failure
-class ParseError : public std::runtime_error {
+class ParseError : public std::runtime_error
+{
 public:
     explicit ParseError(const std::string &reason)
-        : std::runtime_error(reason) {}
+        : std::runtime_error(reason)
+    {}
 };
 
 enum class TokenType : uint32_t
@@ -68,13 +71,17 @@ struct Token
     std::string toString() const
     {
         if(!text.empty())
+        {
             return std::format("{}('{}') {}", enumName(type), text, sourceLocation.toString());
+        }
         else
+        {
             return std::format("{} {}", enumName(type), sourceLocation.toString());
+        }
     }
 };
 
-inline std::ostream& operator<<(std::ostream &ostream, const Token &token)
+inline std::ostream &operator<<(std::ostream &ostream, const Token &token)
 {
     ostream << token.toString();
     return ostream;
@@ -90,10 +97,10 @@ public:
         , _sourceLocation{1, 1}
     {}
 
-    Lexer(const Lexer&) = default;
-    Lexer(Lexer&&) = default;
-    Lexer& operator=(const Lexer&) = default;
-    Lexer& operator=(Lexer&&) = default;
+    Lexer(const Lexer &) = default;
+    Lexer(Lexer &&) = default;
+    Lexer &operator=(const Lexer &) = default;
+    Lexer &operator=(Lexer &&) = default;
 
     // Return the next available token from the input
     Token nextToken();
@@ -114,7 +121,10 @@ private:
     void updateLineNumber();
     void skipWhitespace();
     void advance(size_t increment = 1);
-    char peek() const { return _input[_currentIndex]; }
+    char peek() const
+    {
+        return _input[_currentIndex];
+    }
     std::string identifierString();
     SourceLocation calcSourceLocation(const std::string &lexeme) const;
 

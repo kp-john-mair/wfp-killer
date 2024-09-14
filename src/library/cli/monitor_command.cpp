@@ -1,8 +1,9 @@
 #include <cli/monitor_command.h>
 
-namespace wfpk {
+namespace wfpk
+{
 MonitorCommand::MonitorCommand(wfpk::WfpKiller *pWfpKiller)
-: CliCommand(pWfpKiller)
+    : CliCommand(pWfpKiller)
 {
     initOptions("monitor", "Monitor WFP events");
     addOption("h,help", "Display this help message.");

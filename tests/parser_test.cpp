@@ -5,12 +5,12 @@
 namespace views = std::ranges::views;
 using namespace wfpk;
 
-namespace {
-auto filterConditionsFor(std::string input)
-    -> FilterConditions
+namespace
+{
+auto filterConditionsFor(std::string input) -> FilterConditions
 {
     auto tree = Parser{input}.parse();
-    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto rule = static_cast<FilterNode *>(tree->children()[0].get());
     return rule->filterConditions();
 }
 }
@@ -22,7 +22,7 @@ TEST(ParserTests, TestBasicParsingSingleRule)
     Parser parser{input};
 
     auto tree = parser.parseTrace();
-    const auto rule = static_cast<FilterNode*>(tree->children().front().get());
+    const auto rule = static_cast<FilterNode *>(tree->children().front().get());
     ASSERT_EQ(tree->children().size(), 1);
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
@@ -41,9 +41,9 @@ TEST(ParserTests, TestBasicParsingMultipleRules)
     Parser parser{input};
 
     auto tree = parser.parseTrace();
-    const auto rule1 = static_cast<FilterNode*>(tree->children()[0].get());
-    const auto rule2 = static_cast<FilterNode*>(tree->children()[1].get());
-    const auto rule3 = static_cast<FilterNode*>(tree->children()[2].get());
+    const auto rule1 = static_cast<FilterNode *>(tree->children()[0].get());
+    const auto rule2 = static_cast<FilterNode *>(tree->children()[1].get());
+    const auto rule3 = static_cast<FilterNode *>(tree->children()[2].get());
     ASSERT_EQ(tree->children().size(), 3);
 
     ASSERT_EQ(rule1->action(), FilterNode::Action::Permit);
@@ -68,7 +68,7 @@ TEST(ParserTests, TestDestIpList)
     auto tree = Parser{input}.parse();
     ASSERT_EQ(tree->children().size(), 1);
 
-    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto rule = static_cast<FilterNode *>(tree->children()[0].get());
     const auto conditions = rule->filterConditions();
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
@@ -83,7 +83,7 @@ TEST(ParserTests, TestSourceIpListv4)
     auto tree = Parser{input}.parse();
     ASSERT_EQ(tree->children().size(), 1);
 
-    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto rule = static_cast<FilterNode *>(tree->children()[0].get());
     const auto conditions = rule->filterConditions();
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
@@ -98,7 +98,7 @@ TEST(ParserTests, TestSourceIpListv6)
     auto tree = Parser{input}.parse();
     ASSERT_EQ(tree->children().size(), 1);
 
-    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto rule = static_cast<FilterNode *>(tree->children()[0].get());
     const auto conditions = rule->filterConditions();
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
@@ -113,7 +113,7 @@ TEST(ParserTests, TestSourceIpListMixed)
     auto tree = Parser{input}.parse();
     ASSERT_EQ(tree->children().size(), 1);
 
-    const auto rule = static_cast<FilterNode*>(tree->children()[0].get());
+    const auto rule = static_cast<FilterNode *>(tree->children()[0].get());
     const auto conditions = rule->filterConditions();
 
     ASSERT_EQ(rule->action(), FilterNode::Action::Permit);
@@ -165,7 +165,7 @@ TEST(ParserTests, TestErrorsIp4VersionMismatch)
     ASSERT_EQ(tree == nullptr, true);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 

@@ -10,10 +10,11 @@
 #include <guiddef.h>
 #include <Rpc.h>
 
-namespace wfpk {
+namespace wfpk
+{
 
 Engine::Engine()
-: _handle{}
+    : _handle{}
 {
     DWORD result = FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, NULL, &_handle);
     if(result != ERROR_SUCCESS)
@@ -67,7 +68,7 @@ auto SingleLayerFilterEnum::createEnumTemplate(const GUID &layerKey) const
 }
 
 SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engineHandle)
-: _engineHandle{engineHandle}
+    : _engineHandle{engineHandle}
 {
     DWORD result{ERROR_SUCCESS};
 
@@ -96,13 +97,17 @@ SingleLayerFilterEnum::SingleLayerFilterEnum(const GUID &layerKey, HANDLE engine
         // Grab a new filter so that we can carefully manage its lifetime
         DWORD result = FwpmFilterGetById(_engineHandle, pFilters[i]->filterId, &pFilter);
         if(result == ERROR_SUCCESS)
+        {
             _pFilters.insert(std::shared_ptr<FWPM_FILTER>{pFilter, WfpDeleter{}});
+        }
         else
+        {
             std::cerr << "FwpmFilterGetById failed: " << getErrorString(result) << std::endl;
+        }
     }
 
     // Free the enum filters since we have shared_ptrs to new ones now anyway
-    FwpmFreeMemory(reinterpret_cast<void**>(&pFilters));
+    FwpmFreeMemory(reinterpret_cast<void **>(&pFilters));
     // Close the enumeration handle
     result = FwpmFilterDestroyEnumHandle(_engineHandle, enumHandle);
     if(result != ERROR_SUCCESS)

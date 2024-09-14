@@ -2,15 +2,16 @@
 #include <fwpmu.h>
 #include <string>
 
-namespace wfpk {
-    // The names of a WFP entity.
-    // Both the friendlyName (human readable) as well as the
-    // raw WFP name (often more arcane).
-    struct WfpName
-    {
-        std::string friendlyName;
-        std::string rawName;
-    };
+namespace wfpk
+{
+// The names of a WFP entity.
+// Both the friendlyName (human readable) as well as the
+// raw WFP name (often more arcane).
+struct WfpName
+{
+    std::string friendlyName;
+    std::string rawName;
+};
 
 // Our own enum mapping of non-enum types such as FWP_ACTION_TYPE
 // which is just an alias for a UINT32 - so we map it to an enum value
@@ -19,7 +20,8 @@ namespace wfpk {
 enum WFPK_TYPES
 {
     WFPK_ACTION_TYPE,
-    // Maps to the IPPROTO_* fields found here: https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
+    // Maps to the IPPROTO_* fields found here:
+    // https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
     WFPK_IPPROTO_TYPE
 };
 
@@ -27,20 +29,17 @@ enum WFPK_TYPES
 class WfpNameMapper
 {
 public:
-    static WfpName getName(const GUID& guidName);
+    static WfpName getName(const GUID &guidName);
     static WfpName getName(const FWP_MATCH_TYPE &matchType);
     static WfpName getName(const FWPM_NET_EVENT_TYPE &eventType);
     static WfpName getName(const FWP_IP_VERSION &ipVersion);
 
     // Primary template (not implemented)
-    template <WFPK_TYPES type, typename T>
-    static WfpName getName(T value);
+    template <WFPK_TYPES type, typename T> static WfpName getName(T value);
 
     // Full specializations of above
-    template <>
-    static WfpName getName<WFPK_ACTION_TYPE, UINT32>(UINT32 value);
+    template <> static WfpName getName<WFPK_ACTION_TYPE, UINT32>(UINT32 value);
 
-    template <>
-    static WfpName getName<WFPK_IPPROTO_TYPE, UINT8>(UINT8 value);
+    template <> static WfpName getName<WFPK_IPPROTO_TYPE, UINT8>(UINT8 value);
 };
 }

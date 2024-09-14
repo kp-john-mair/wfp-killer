@@ -3,12 +3,13 @@
 #include <parser/nodes.h>
 #include <wfp_objects.h>
 
-namespace wfpk {
+namespace wfpk
+{
 class WfpExecutor
 {
 public:
     explicit WfpExecutor(Engine &engine)
-    : _engine{engine}
+        : _engine{engine}
     {}
 
 public:

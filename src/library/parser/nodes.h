@@ -2,7 +2,8 @@
 
 #include <parser/lexer.h>
 
-namespace wfpk {
+namespace wfpk
+{
 // Forward declare our visitor
 class WfpExecutor;
 
@@ -17,12 +18,12 @@ struct IpAddresses
         return v4.empty() && v6.empty();
     }
 
-    auto operator<=>(const IpAddresses&) const = default;
+    auto operator<=>(const IpAddresses &) const = default;
 };
 
 class Node
 {
-// Make it uninstantiable as it's an abstract class
+    // Make it uninstantiable as it's an abstract class
 protected:
     Node() = default;
 
@@ -36,21 +37,22 @@ public:
         _pChildren.push_back(std::move(child));
     }
 
-    auto children() const
-        -> const std::vector<std::unique_ptr<Node>>&
+    auto children() const -> const std::vector<std::unique_ptr<Node>> &
     {
         return _pChildren;
     }
 
-    virtual std::string toString() const { return "N/A"; }
+    virtual std::string toString() const
+    {
+        return "N/A";
+    }
 
 private:
     std::vector<std::unique_ptr<Node>> _pChildren;
     Token _token{};
 };
 
-class RulesetNode final : public Node,
-    private OStreamTraceable<RulesetNode>
+class RulesetNode final : public Node, private OStreamTraceable<RulesetNode>
 {
 public:
     RulesetNode() = default;
@@ -61,7 +63,9 @@ public:
     {
         std::string result;
         for(const auto &child : children())
+        {
             result += std::format("{}\n", child->toString());
+        }
 
         return result;
     }
@@ -69,8 +73,18 @@ public:
 
 struct FilterConditions
 {
-    enum class IpVersion { BothInet4Inet6, Inet4, Inet6 };
-    enum class TransportProtocol { AllTransports, Tcp, Udp };
+    enum class IpVersion
+    {
+        BothInet4Inet6,
+        Inet4,
+        Inet6
+    };
+    enum class TransportProtocol
+    {
+        AllTransports,
+        Tcp,
+        Udp
+    };
 
     std::vector<uint16_t> sourcePorts;
     std::vector<uint16_t> destPorts;
@@ -81,30 +95,48 @@ struct FilterConditions
     IpVersion ipVersion{};
     TransportProtocol transportProtocol{};
 
-    auto operator<=>(const FilterConditions&) const = default;
+    auto operator<=>(const FilterConditions &) const = default;
 };
 
 // Represents no conditions be applied
 inline const FilterConditions NoFilterConditions = {};
 
-class FilterNode final : public Node,  private OStreamTraceable<FilterNode>
+class FilterNode final : public Node, private OStreamTraceable<FilterNode>
 {
 public:
-    enum class Action { Invalid, Block, Permit };
-    enum class Direction { Invalid, Out, In };
+    enum class Action
+    {
+        Invalid,
+        Block,
+        Permit
+    };
+    enum class Direction
+    {
+        Invalid,
+        Out,
+        In
+    };
 
     FilterNode(Action action, Direction direction, FilterConditions conditions)
-    : _action{action}
-    , _direction{direction}
-    , _conditions{conditions}
-    {
-    }
+        : _action{action}
+        , _direction{direction}
+        , _conditions{conditions}
+    {}
 
     void accept(const WfpExecutor &visitor) override;
 
-    Action action() const { return _action; }
-    Direction direction() const { return _direction; }
-    const FilterConditions &filterConditions() const { return _conditions; }
+    Action action() const
+    {
+        return _action;
+    }
+    Direction direction() const
+    {
+        return _direction;
+    }
+    const FilterConditions &filterConditions() const
+    {
+        return _conditions;
+    }
     std::string toString() const override;
 
 private:
